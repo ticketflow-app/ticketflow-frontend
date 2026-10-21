@@ -1,16 +1,16 @@
-# Casos de Uso
+# Casos de Uso (Frontend)
 
 ## 1. Propósito
 
-Este documento describe el comportamiento esperado del sistema desde la perspectiva de los actores.
+Este documento describe los flujos de usuario que el frontend debe soportar, desde la perspectiva
+de la interfaz. Complementa a `historias_usuarios.md`.
 
-Los casos de uso complementan las historias de usuario y permiten describir:
+Cada caso de uso incluye actor, objetivo, precondiciones, flujo principal, flujos alternativos y
+postcondición. Los pasos describen lo que ve y hace el usuario; la lógica interna del backend no se
+detalla aquí.
 
-- Actores.
-- Precondiciones.
-- Flujo principal.
-- Flujos alternativos.
-- Postcondiciones.
+> Se excluyeron los casos de uso de pruebas de carga, detección de anomalías y análisis de
+> resultados (CU-08 a CU-10), porque no son funcionalidades de la interfaz.
 
 ---
 
@@ -18,7 +18,7 @@ Los casos de uso complementan las historias de usuario y permiten describir:
 
 ## Actor principal
 
-Comprador u organizador.
+Comprador u organizador (visitante).
 
 ## Objetivo
 
@@ -26,35 +26,35 @@ Crear una cuenta en el sistema.
 
 ## Precondiciones
 
-- El usuario no debe estar registrado con el mismo correo.
+- El usuario no está autenticado.
+- No existe una cuenta con el mismo correo.
 
 ## Flujo principal
 
-1. El usuario proporciona su nombre.
-2. El usuario proporciona su correo.
-3. El usuario proporciona su contraseña.
-4. El sistema valida los datos.
-5. El sistema verifica que el correo no exista.
-6. El sistema almacena el usuario.
-7. El sistema informa que el registro fue exitoso.
+1. El usuario abre `/register`.
+2. Completa nombre, correo y contraseña.
+3. La UI valida los campos.
+4. El usuario envía el formulario.
+5. El sistema crea la cuenta.
+6. La UI informa el éxito y redirige a iniciar sesión.
 
 ## Flujos alternativos
 
 ### FA-01 - Correo existente
 
 1. El sistema detecta que el correo ya está registrado.
-2. El sistema rechaza la operación.
-3. El sistema informa el motivo.
+2. La UI muestra el mensaje junto al campo.
+3. El usuario corrige el correo o decide iniciar sesión.
 
 ### FA-02 - Datos inválidos
 
-1. El sistema detecta información inválida.
-2. El sistema rechaza la operación.
-3. El sistema informa los datos que deben corregirse.
+1. La UI detecta campos inválidos antes de enviar (o el sistema los rechaza).
+2. Se muestran los errores por campo y un resumen.
+3. El usuario corrige y reintenta.
 
 ## Postcondición
 
-El usuario queda registrado.
+El usuario queda registrado y puede iniciar sesión.
 
 ---
 
@@ -62,33 +62,41 @@ El usuario queda registrado.
 
 ## Actor principal
 
-Usuario.
+Usuario registrado.
 
 ## Objetivo
 
-Autenticar al usuario.
+Autenticarse y acceder a las funcionalidades de su rol.
 
 ## Precondiciones
 
-- El usuario debe estar registrado.
+- El usuario está registrado.
 
 ## Flujo principal
 
-1. El usuario proporciona correo y contraseña.
-2. El sistema valida las credenciales.
-3. El sistema genera un JWT.
-4. El sistema retorna el token.
+1. El usuario abre `/login`.
+2. Ingresa correo y contraseña.
+3. Envía el formulario.
+4. El sistema valida las credenciales y devuelve el acceso.
+5. La UI redirige al destino original o al catálogo.
+6. La navegación se ajusta al rol.
 
 ## Flujos alternativos
 
 ### FA-01 - Credenciales inválidas
 
-1. El sistema detecta credenciales incorrectas.
-2. El sistema rechaza la autenticación.
+1. El sistema rechaza la autenticación.
+2. La UI muestra un error genérico y permite reintentar.
+
+### FA-02 - Sesión expirada durante una acción
+
+1. Una petición protegida responde `401`.
+2. La UI informa que la sesión expiró y redirige a login.
+3. Tras autenticarse, se retoma la intención cuando sea posible.
 
 ## Postcondición
 
-El usuario obtiene una sesión autenticada mediante JWT.
+El usuario tiene una sesión activa y ve las opciones de su rol.
 
 ---
 
@@ -100,25 +108,38 @@ Organizador.
 
 ## Objetivo
 
-Registrar un nuevo evento.
+Registrar un nuevo evento con sus localidades, precios y capacidades.
 
 ## Precondiciones
 
-- El usuario debe estar autenticado.
-- El usuario debe tener rol de organizador.
+- El usuario está autenticado.
+- El usuario tiene rol de organizador.
 
 ## Flujo principal
 
-1. El organizador proporciona los datos del evento.
-2. El sistema valida los datos.
-3. El sistema registra el evento.
-4. El sistema registra sus localidades.
-5. El sistema registra precios y capacidades.
-6. El sistema confirma la creación.
+1. El organizador abre "Mis eventos" y elige crear.
+2. Completa los datos del evento.
+3. Agrega una o más localidades con precio y capacidad.
+4. La UI valida los campos.
+5. Envía el formulario.
+6. El sistema registra el evento.
+7. La UI confirma y redirige a "Mis eventos".
+
+## Flujos alternativos
+
+### FA-01 - Datos faltantes o inválidos
+
+1. La UI marca los campos con error.
+2. No se envía la solicitud hasta corregirlos.
+
+### FA-02 - Sin permisos
+
+1. El sistema responde `403`.
+2. La UI muestra acceso denegado.
 
 ## Postcondición
 
-El evento queda registrado en Catalog.
+El evento queda registrado y visible para el organizador.
 
 ---
 
@@ -126,22 +147,37 @@ El evento queda registrado en Catalog.
 
 ## Actor principal
 
-Comprador.
+Comprador (o visitante).
 
 ## Objetivo
 
-Obtener eventos disponibles.
+Obtener los eventos disponibles.
 
 ## Precondiciones
 
-- No requiere autenticación para consulta pública.
+- Ninguna; la consulta pública no requiere autenticación.
 
 ## Flujo principal
 
-1. El comprador solicita los eventos.
-2. Catalog procesa la consulta.
-3. El sistema obtiene los eventos.
-4. El sistema retorna los resultados.
+1. El usuario abre el catálogo.
+2. La UI muestra el listado (o skeletons mientras carga).
+3. El usuario puede buscar, filtrar y paginar.
+4. Selecciona un evento y abre su detalle.
+
+## Flujos alternativos
+
+### FA-01 - Sin resultados
+
+1. La UI muestra un empty state.
+2. Ofrece limpiar filtros.
+
+### FA-02 - Error de consulta
+
+1. La UI muestra un estado de error con reintento.
+
+## Postcondición
+
+El usuario visualiza los eventos que cumplen sus criterios.
 
 ---
 
@@ -153,22 +189,30 @@ Comprador.
 
 ## Objetivo
 
-Conocer las entradas disponibles.
+Conocer las entradas disponibles por localidad.
 
 ## Precondiciones
 
-- El evento debe existir.
+- El evento existe.
 
 ## Flujo principal
 
-1. El comprador solicita la disponibilidad.
-2. Inventory identifica el evento.
-3. Inventory consulta la disponibilidad actual.
-4. El sistema retorna la disponibilidad por localidad.
+1. El usuario abre el detalle del evento.
+2. La UI consulta la disponibilidad.
+3. Muestra cada localidad con precio y entradas restantes.
+4. Indica la hora de la última actualización.
+5. Las localidades agotadas aparecen como no seleccionables.
+
+## Flujos alternativos
+
+### FA-01 - Disponibilidad no disponible temporalmente
+
+1. La consulta falla.
+2. La UI muestra un aviso y permite reintentar; no inventa valores.
 
 ## Postcondición
 
-El comprador obtiene la disponibilidad actual.
+El usuario conoce la disponibilidad actual.
 
 ---
 
@@ -184,50 +228,54 @@ Reservar una cantidad determinada de entradas.
 
 ## Precondiciones
 
-- El comprador debe estar autenticado.
-- El evento debe existir.
-- La localidad debe existir.
-- La cantidad solicitada debe ser válida.
+- El comprador está autenticado.
+- El evento y la localidad existen.
+- La cantidad solicitada es válida.
 
 ## Flujo principal
 
-1. El comprador solicita una cantidad de entradas.
-2. Inventory recibe la solicitud.
-3. Inventory ejecuta una operación atómica sobre la disponibilidad.
-4. El sistema determina si existe disponibilidad.
-5. Si existe disponibilidad, la operación es aceptada.
-6. El sistema registra la reserva.
-7. El sistema retorna la reserva.
+1. El comprador elige localidad y cantidad.
+2. La UI valida la cantidad contra la disponibilidad mostrada.
+3. El comprador confirma.
+4. La UI deshabilita el botón y muestra el estado en curso.
+5. El sistema procesa la reserva y descuenta la disponibilidad.
+6. La UI muestra la confirmación y actualiza la disponibilidad.
+7. El comprador puede ir a "Mis reservas".
 
 ## Flujos alternativos
 
 ### FA-01 - Disponibilidad insuficiente
 
-1. Inventory detecta que la cantidad solicitada no está disponible.
-2. La operación es rechazada.
-3. La disponibilidad no debe quedar afectada por una reserva no válida.
-4. El sistema informa que no existe disponibilidad suficiente.
+1. El sistema rechaza la reserva (`409`).
+2. La UI informa que no hay suficientes entradas.
+3. La UI refresca la disponibilidad y ajusta la cantidad máxima.
 
 ### FA-02 - Solicitudes concurrentes
 
-1. Dos o más usuarios realizan reservas simultáneamente.
-2. Inventory procesa las operaciones de manera atómica.
-3. Solo las solicitudes con disponibilidad suficiente son aceptadas.
-4. El inventario no debe permitir sobreventa.
+1. Otro usuario toma las entradas antes de la confirmación.
+2. El sistema acepta solo las solicitudes con disponibilidad.
+3. La UI del rechazado muestra el resultado y refresca el estado.
 
-### FA-03 - Error durante persistencia
+### FA-03 - Error del servicio
 
-1. La operación de inventario puede completarse antes de persistir la reserva.
-2. El sistema debe aplicar el mecanismo de recuperación definido por la arquitectura.
-3. El incidente debe quedar registrado para su análisis.
+1. La operación no se completa o el servicio no responde.
+2. La UI muestra un estado de error con reintento.
+3. Nunca se muestra la reserva como confirmada.
+
+### FA-04 - Sesión expirada
+
+1. El sistema responde `401`.
+2. La UI redirige a login conservando la selección cuando sea posible.
 
 ## Postcondición
 
 Si la reserva es exitosa:
 
-- Existe un registro de reserva.
+- Existe un registro de reserva confirmado por el sistema.
 - La disponibilidad disminuye.
-- La cantidad reservada no supera la disponibilidad existente.
+- La UI refleja el nuevo estado.
+
+Si no es exitosa, no se muestra ninguna reserva como confirmada.
 
 ---
 
@@ -243,93 +291,29 @@ Cancelar una reserva y liberar sus entradas.
 
 ## Precondiciones
 
-- La reserva debe existir.
-- La reserva debe pertenecer al comprador.
-- La reserva debe estar en un estado que permita cancelación.
+- La reserva existe y pertenece al comprador.
+- La reserva está en un estado que permite cancelación.
 
 ## Flujo principal
 
-1. El comprador solicita cancelar la reserva.
-2. El sistema valida la propiedad de la reserva.
-3. El sistema cambia el estado de la reserva.
-4. El sistema libera las entradas.
-5. El sistema confirma la cancelación.
+1. El comprador abre el detalle de la reserva y elige cancelar.
+2. La UI pide confirmación.
+3. El comprador confirma.
+4. El sistema cambia el estado y libera las entradas.
+5. La UI actualiza el estado de la reserva.
 
----
+## Flujos alternativos
 
-# CU-08 - Ejecutar prueba de carga
+### FA-01 - Reserva no cancelable
 
-## Actor principal
+1. La UI oculta o deshabilita la acción.
+2. Si el sistema la rechaza, se informa el motivo.
 
-Investigador.
+### FA-02 - Error del servicio
 
-## Objetivo
-
-Evaluar el comportamiento del sistema.
-
-## Precondiciones
-
-- El sistema debe estar desplegado.
-- Deben existir datos de prueba.
-- El escenario de carga debe estar definido.
-
-## Flujo principal
-
-1. El investigador configura el número de usuarios.
-2. Configura la duración.
-3. Configura el patrón de tráfico.
-4. Ejecuta la prueba.
-5. El generador envía solicitudes.
-6. El sistema procesa las solicitudes.
-7. Se recopilan métricas.
-8. Se almacenan los resultados.
+1. La UI muestra un error y permite reintentar.
+2. El estado de la reserva no se cambia localmente sin confirmación.
 
 ## Postcondición
 
-Se dispone de resultados de rendimiento.
-
----
-
-# CU-09 - Detectar anomalías
-
-## Actor principal
-
-Componente de Inteligencia Artificial.
-
-## Objetivo
-
-Identificar comportamientos anormales en las métricas.
-
-## Precondiciones
-
-- Deben existir métricas operativas.
-
-## Flujo principal
-
-1. El sistema obtiene métricas.
-2. La IA analiza los datos.
-3. Identifica patrones relevantes.
-4. Determina si existe una anomalía.
-5. Clasifica el comportamiento.
-6. Genera una recomendación cuando corresponda.
-
----
-
-# CU-10 - Analizar resultados
-
-## Actor principal
-
-Investigador.
-
-## Objetivo
-
-Comparar el comportamiento del sistema bajo diferentes escenarios.
-
-## Flujo principal
-
-1. El investigador ejecuta escenarios.
-2. Obtiene las métricas.
-3. Compara resultados.
-4. Identifica diferencias.
-5. Analiza los atributos de calidad.
-6. Documenta las conclusiones.
+La reserva queda cancelada y la disponibilidad se libera.

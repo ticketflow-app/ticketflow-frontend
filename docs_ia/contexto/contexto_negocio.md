@@ -1,644 +1,254 @@
-# Contexto de Negocio
+# Contexto de Negocio (Frontend)
 
 ## 1. Información general del proyecto
 
 ### Nombre del proyecto
 
-Metodología de Ingeniería de Software con Inteligencia Artificial para Aplicaciones de Gran Escala
+Metodología de Ingeniería de Software con Inteligencia Artificial para Aplicaciones de Gran Escala.
 
 ### Tipo de proyecto
 
-Proyecto académico de desarrollo de software y evaluación de una metodología de ingeniería de software asistida por Inteligencia Artificial.
+Proyecto académico de desarrollo de software y evaluación de una metodología de ingeniería de
+software asistida por Inteligencia Artificial.
 
 ### Equipo
 
-El proyecto será desarrollado por un equipo de tres estudiantes.
+Tres estudiantes.
 
 ### Duración
 
-El proyecto se desarrolla durante el semestre académico 2026-2.
+Semestre académico 2026-2. El prototipo funcional tiene una restricción aproximada de seis semanas
+para su implementación principal.
 
-El prototipo funcional tiene una restricción aproximada de seis semanas para su implementación principal.
+### Alcance de este documento
+
+Este documento describe el **contexto de negocio desde la perspectiva del frontend**: qué necesita
+el usuario, qué debe mostrar la interfaz y qué reglas de negocio debe respetar. No describe la
+arquitectura interna del backend ni decisiones de infraestructura; esas viven en los repositorios
+de los servicios correspondientes.
 
 ---
 
-# 2. Contexto del problema
+## 2. Contexto del problema
 
-Las aplicaciones que manejan eventos de alta demanda pueden experimentar incrementos repentinos y significativos en el número de usuarios cuando se habilita la venta o reserva de entradas para eventos populares.
+Las aplicaciones que manejan eventos de alta demanda experimentan incrementos repentinos y
+significativos de usuarios cuando se habilita la venta o reserva de entradas para eventos
+populares.
 
-Un ejemplo representativo ocurre cuando comienza la venta de entradas para un evento con alta demanda. En ese momento, una gran cantidad de usuarios puede intentar simultáneamente:
+En ese momento, una gran cantidad de usuarios intenta simultáneamente:
 
 - Consultar los eventos disponibles.
-- Consultar información de un evento.
-- Consultar las localidades disponibles.
-- Consultar la cantidad de entradas restantes.
-- Seleccionar una localidad.
-- Seleccionar una cantidad de entradas.
-- Crear una reserva.
-
-Este comportamiento genera una alta concentración de solicitudes en periodos muy cortos.
-
-Una implementación que no considere adecuadamente la concurrencia puede producir problemas como:
-
-- Sobreventa de entradas.
-- Reservas duplicadas.
-- Cantidades de disponibilidad incorrectas.
-- Condiciones de carrera.
-- Tiempos de respuesta elevados.
-- Errores bajo carga.
-- Saturación de recursos.
-- Caídas del sistema.
-- Dificultad para recuperar el sistema después de un pico de tráfico.
-
-Por esta razón, el proyecto busca utilizar una metodología de ingeniería de software que considere desde las primeras etapas los atributos de calidad asociados con aplicaciones de gran escala.
-
----
-
-# 3. Problema principal
-
-El problema central consiste en diseñar y construir un prototipo de aplicación para reserva de entradas que permita estudiar cómo una arquitectura y una metodología de ingeniería de software pueden responder ante escenarios de alta concurrencia y picos repentinos de demanda.
-
-El proyecto no busca construir una plataforma comercial de venta de entradas.
-
-El objetivo es construir un prototipo controlado que permita experimentar y evaluar decisiones de arquitectura relacionadas con:
-
-- Escalabilidad.
-- Disponibilidad.
-- Rendimiento.
-- Baja latencia.
-- Concurrencia.
-- Consistencia.
-- Observabilidad.
-- Manejo de picos de tráfico.
-
----
-
-# 4. Objetivo general
-
-Diseñar y evaluar una metodología de ingeniería de software asistida por Inteligencia Artificial para el desarrollo de aplicaciones de gran escala, utilizando como caso de estudio un sistema de reserva de entradas para eventos con alta demanda.
-
----
-
-# 5. Objetivos específicos
-
-1. Identificar los requisitos funcionales y atributos de calidad relevantes para una aplicación de reserva de entradas sometida a alta concurrencia.
-
-2. Utilizar técnicas de diseño de software como Attribute-Driven Design (ADD) para orientar las decisiones arquitectónicas a partir de los atributos de calidad.
-
-3. Aplicar Spec-Driven Development (SDD) para definir de manera estructurada los requisitos, contratos y comportamiento esperado del sistema.
-
-4. Diseñar una arquitectura basada en microservicios y arquitectura hexagonal.
-
-5. Implementar un prototipo funcional compuesto inicialmente por los microservicios de usuarios, catálogo e inventario.
-
-6. Implementar mecanismos que permitan controlar la concurrencia durante la reserva de entradas.
-
-7. Diseñar escenarios de carga que permitan simular diferentes niveles de demanda.
-
-8. Evaluar el comportamiento del sistema bajo carga sostenida y aumentos repentinos de tráfico.
-
-9. Medir métricas como latencia, disponibilidad, tasa de errores, capacidad de procesamiento y utilización de recursos.
-
----
-
-# 6. Caso de estudio
-
-El caso de estudio consiste en una aplicación para la consulta y reserva de entradas para eventos.
-
-Los usuarios podrán consultar eventos disponibles, revisar sus características, consultar las localidades y cantidades disponibles y realizar reservas.
-
-Los organizadores podrán crear y administrar eventos.
-
----
-
-# 7. Alcance funcional
-
-El prototipo contempla inicialmente tres microservicios principales:
-
-1. Users.
-2. Catalog.
-3. Inventory.
-
-## 7.1 Users
-
-El microservicio Users será responsable de la gestión de usuarios y autenticación.
-
-Permitirá:
-
-- Registrar usuarios.
-- Iniciar sesión.
-- Consultar el perfil del usuario autenticado.
-- Gestionar roles.
-
-Los roles considerados son:
-
-- comprador.
-- organizador.
-
----
-
-## 7.2 Catalogo
-
-El microservicio Catalog será responsable de la información estática relacionada con los eventos.
-
-Permitirá:
-
-- Crear eventos.
-- Consultar eventos.
-- Buscar eventos.
-- Filtrar eventos.
 - Consultar el detalle de un evento.
-- Modificar eventos.
-- Definir localidades.
-- Definir precios.
-- Definir la capacidad total de cada localidad.
-
-Catalogo almacenará información como:
-
-- Nombre del evento.
-- Descripción.
-- Fecha.
-- Lugar.
-- Categoría.
-- Organizador.
-- Localidades.
-- Precio.
-- Capacidad total.
-
-Catalog no será responsable de determinar la disponibilidad actual de entradas.
-
----
-
-## 7.3 Inventory
-
-El microservicio Inventory será responsable de controlar la disponibilidad de entradas y las reservas.
-
-Permitirá:
-
-- Consultar disponibilidad.
-- Crear reservas.
-- Consultar las reservas de un usuario.
-- Consultar el estado de una reserva.
-- Cancelar reservas cuando esta funcionalidad sea implementada.
-- Liberar disponibilidad cuando corresponda.
-
-Inventory será el responsable de aplicar las reglas críticas relacionadas con la concurrencia.
-
----
-
-# 8. Actores del sistema
-
-## 8.1 Comprador
-
-Usuario que desea consultar eventos y realizar reservas.
-
-Puede:
-
-- Registrarse.
-- Iniciar sesión.
-- Consultar eventos.
-- Consultar detalles.
-- Consultar disponibilidad.
-- Seleccionar una localidad.
-- Seleccionar cantidad de entradas.
+- Consultar localidades y entradas restantes.
+- Seleccionar una localidad y una cantidad de entradas.
 - Crear una reserva.
-- Consultar sus reservas.
+
+Ese comportamiento concentra solicitudes en periodos muy cortos. Para el frontend, el reto es
+mantener una experiencia **clara, rápida y honesta** bajo esa carga: no bloquearse, no mostrar
+datos obsoletos como definitivos y no prometer reservas que el sistema no confirmó.
 
 ---
 
-## 8.2 Organizador
+## 3. Problema principal
 
-Usuario responsable de administrar eventos.
+Diseñar y construir la interfaz de un prototipo de reserva de entradas que permita:
 
-Puede:
+- Descubrir eventos y consultar su disponibilidad.
+- Completar una reserva con pocos pasos y sin ambigüedad.
+- Entender de inmediato cuándo no hay disponibilidad o cuándo el servicio falla.
+- Gestionar eventos (organizador) y usuarios (administrador) según el rol.
 
-- Crear eventos.
-- Modificar eventos.
-- Definir localidades.
-- Definir precios.
-- Definir capacidades.
-
----
-
-## 8.3 Administrador
-
-Rol utilizado para operaciones administrativas del sistema.
-
-Puede realizar operaciones relacionadas con la gestión de usuarios y roles.
+El frontend **no** resuelve la concurrencia ni la consistencia del inventario: esas son
+responsabilidades del backend. Su papel es representar correctamente el estado que el backend
+expone y evitar acciones que induzcan sobreventa o reservas duplicadas desde la interfaz.
 
 ---
 
-## 8.4 Sistema de pruebas de carga
+## 4. Objetivo general
 
-Componente externo utilizado para simular múltiples usuarios concurrentes.
-
-Su propósito es generar solicitudes controladas para evaluar:
-
-- Latencia.
-- Throughput.
-- Tasa de errores.
-- Capacidad.
-- Comportamiento ante concurrencia.
-- Comportamiento ante picos de tráfico.
+Proporcionar una interfaz web que permita a compradores, organizadores y administradores operar el
+sistema de reserva de entradas de forma clara, accesible y resiliente, incluso durante picos de
+demanda.
 
 ---
 
-# 9. Flujo general del negocio
+## 5. Actores y roles
 
-El flujo principal del sistema es el siguiente:
+### 5.1 Comprador
 
-Un organizador crea un evento y configura sus localidades, precios y capacidades.
+Usuario que consulta eventos y realiza reservas. Puede:
 
-Los compradores pueden consultar los eventos disponibles y seleccionar uno.
+- Registrarse e iniciar sesión.
+- Consultar eventos, buscarlos y filtrarlos.
+- Ver el detalle del evento y la disponibilidad.
+- Seleccionar localidad y cantidad de entradas.
+- Crear una reserva.
+- Consultar sus reservas, ver su detalle y cancelarlas.
 
-Al consultar el detalle del evento, el usuario puede conocer sus características y las localidades disponibles.
+### 5.2 Organizador
 
-Cuando el usuario desea reservar entradas, el sistema consulta la disponibilidad actual.
+Usuario responsable de administrar eventos. Puede:
 
-La operación de reserva debe verificar y modificar la disponibilidad de manera atómica para evitar que dos o más usuarios obtengan las mismas entradas.
+- Crear y modificar eventos.
+- Definir localidades, precios y capacidades.
+- Consultar sus eventos.
 
-Si existe disponibilidad suficiente, la reserva es aceptada y registrada.
+### 5.3 Administrador
 
-Si no existe disponibilidad suficiente, la reserva es rechazada.
+Rol para operaciones administrativas. Puede gestionar usuarios y roles.
 
-La información de disponibilidad debe reflejar el estado actual del inventario.
+### 5.4 Visitante
 
----
+Usuario no autenticado. Puede consultar el catálogo, el detalle y la disponibilidad, y registrarse
+o iniciar sesión. No puede reservar ni acceder a secciones privadas.
 
-# 10. Regla fundamental del negocio
-
-El sistema nunca debe permitir una cantidad de reservas confirmadas superior a la capacidad disponible de una localidad.
-
-Por ejemplo:
-
-Si una localidad tiene una capacidad de 100 entradas y existen 98 entradas disponibles, dos usuarios pueden realizar reservas simultáneas.
-
-Si un usuario intenta reservar 2 entradas y otro usuario intenta reservar 3 entradas al mismo tiempo, el sistema debe garantizar que las operaciones se procesen correctamente y que nunca se asignen más de las 100 entradas disponibles.
-
-La lógica de concurrencia debe garantizar que no se produzca sobreventa.
-
----
-
-# 11. Separación entre catálogo e inventario
-
-Una decisión fundamental del negocio es separar la información estática del evento de la disponibilidad dinámica.
-
-Catalog contiene:
-
-- Nombre.
-- Descripción.
-- Fecha.
-- Lugar.
-- Categoría.
-- Localidades.
-- Precio.
-- Capacidad total.
-
-Inventory contiene:
-
-- Disponibilidad actual.
-- Reservas.
-- Estado de las reservas.
-
-La capacidad total representa una configuración del evento.
-
-La disponibilidad representa el estado dinámico del inventario.
-
-Por lo tanto:
-
-
-La capacidad total cambia principalmente durante la configuración del evento.
-
-La disponibilidad cambia constantemente a medida que los usuarios realizan reservas o se liberan entradas.
+> El sistema de pruebas de carga y el staff de check-in **no** son actores de la interfaz en el
+> alcance actual. Cualquier rol adicional requiere definición previa en `contexto` y una decisión.
 
 ---
 
-# 12. Reglas de negocio
+## 6. Alcance funcional
 
-## RB-01. Identificación de usuarios
+El frontend cubre los siguientes módulos (detalle en `funcionalidades.md`):
 
-Cada usuario debe tener un identificador único.
-
-## RB-02. Correo único
-
-No deben existir dos usuarios con el mismo correo electrónico.
-
-## RB-03. Contraseñas
-
-Las contraseñas no deben almacenarse en texto plano.
-
-## RB-04. Autenticación
-
-Las operaciones protegidas requieren autenticación.
-
-## RB-05. Roles
-
-Las operaciones administrativas deben depender del rol del usuario.
-
-## RB-06. Organización de eventos
-
-Un organizador puede crear y modificar eventos de acuerdo con los permisos definidos.
-
-## RB-07. Capacidad
-
-Cada localidad debe tener una capacidad total definida.
-
-## RB-08. Disponibilidad
-
-La disponibilidad nunca debe ser negativa al finalizar una operación exitosa.
-
-## RB-09. Reserva
-
-Una reserva solamente puede ser creada cuando existe disponibilidad suficiente.
-
-## RB-10. Concurrencia
-
-Dos operaciones concurrentes no pueden consumir las mismas entradas.
-
-## RB-11. No sobreventa
-
-El total de entradas reservadas no puede superar la capacidad disponible.
-
-## RB-12. Inventario como fuente de verdad
-
-Inventory es responsable de determinar la disponibilidad actual.
-
-## RB-13. Persistencia
-
-Las reservas deben mantenerse en una base de datos para proporcionar persistencia y trazabilidad.
-
-## RB-14. Disponibilidad rápida
-
-La consulta de disponibilidad debe estar optimizada para soportar una gran cantidad de consultas concurrentes.
-
-## RB-15. Independencia de servicios
-
-Cada microservicio debe ser responsable de su propio dominio y datos.
+1. **Autenticación y cuenta:** registro, inicio y cierre de sesión, perfil.
+2. **Catálogo de eventos:** listado, búsqueda, filtros y detalle.
+3. **Disponibilidad:** consulta por localidad y refresco antes de reservar.
+4. **Reservas:** creación, historial, detalle y cancelación.
+5. **Gestión de eventos:** alta y edición de eventos, localidades, precios y capacidades.
+6. **Administración:** gestión de usuarios y roles.
 
 ---
 
-# 13. Escenario crítico de negocio
+## 7. Flujo general del negocio
 
-El escenario crítico del proyecto ocurre cuando inicia la venta o reserva de entradas de un evento altamente demandado.
+1. Un organizador crea un evento y configura sus localidades, precios y capacidades.
+2. Los compradores consultan los eventos disponibles y seleccionan uno.
+3. En el detalle, el comprador conoce las características y la disponibilidad por localidad.
+4. El comprador elige localidad y cantidad, y confirma la reserva.
+5. La interfaz muestra el resultado: confirmación o rechazo por falta de disponibilidad.
+6. El comprador puede consultar y cancelar sus reservas.
 
-En este momento puede ocurrir que cientos o miles de solicitudes intenten realizar operaciones similares en un periodo corto.
-
-El sistema debe mantener la integridad del inventario.
-
-Ejemplo:
-
-Una localidad tiene una sola entrada disponible.
-
-Dos compradores realizan una solicitud de reserva prácticamente al mismo tiempo.
-
-El sistema debe garantizar que:
-
-- Solo una reserva sea aceptada.
-- La otra reserva sea rechazada.
-- La disponibilidad final sea cero.
-- No exista sobreventa.
-- El estado persistido de las reservas sea coherente con el resultado de la operación.
-
-Este escenario será uno de los principales casos utilizados para evaluar la arquitectura.
+La interfaz debe reflejar el estado real del inventario en cada paso y refrescarlo antes de
+confirmar una reserva.
 
 ---
 
-# 14. Atributos de calidad prioritarios
+## 8. Regla fundamental del negocio
 
-El proyecto considera los siguientes atributos de calidad.
+El sistema nunca debe permitir una cantidad de reservas confirmadas superior a la capacidad
+disponible de una localidad (**RB-11, no sobreventa**).
 
-## 14.1 Escalabilidad
+Implicaciones para el frontend:
 
-El sistema debe poder soportar incrementos en el número de solicitudes.
-
-## 14.2 Disponibilidad
-
-El sistema debe continuar respondiendo durante incrementos de demanda dentro de los límites definidos para el experimento.
-
-## 14.3 Baja latencia
-
-Las operaciones críticas deben responder en tiempos adecuados incluso bajo carga.
-
-## 14.4 Rendimiento
-
-El sistema debe procesar una cantidad significativa de solicitudes por unidad de tiempo.
-
-## 14.5 Concurrencia
-
-El sistema debe manejar correctamente múltiples operaciones simultáneas.
-
-## 14.6 Consistencia
-
-El inventario debe mantener información coherente y evitar la sobreventa.
-
-## 14.7 Observabilidad
-
-El sistema debe proporcionar métricas suficientes para analizar su comportamiento.
+- No habilitar cantidades superiores a la disponibilidad mostrada.
+- Refrescar la disponibilidad antes de confirmar.
+- Tratar el rechazo por falta de disponibilidad (`409`) como un resultado de negocio esperado,
+  no como un error técnico.
+- Nunca mostrar una reserva como confirmada sin respuesta exitosa del backend.
 
 ---
 
-# 15. Arquitectura general
+## 9. Separación entre catálogo e inventario
 
-El sistema utilizará una arquitectura basada en microservicios combinada con arquitectura hexagonal.
+- **Catálogo:** información estática del evento (nombre, descripción, fecha, lugar, categoría,
+  localidades, precios, capacidad total).
+- **Inventario:** disponibilidad dinámica y reservas.
 
-Los microservicios iniciales serán:
-
-- Users.
-- Catalog.
-- Inventory.
-
-Cada microservicio tendrá su propio dominio y será responsable de sus operaciones.
-
-La arquitectura hexagonal se utilizará para separar:
-
-- Lógica de negocio.
-- Casos de uso.
-- Interfaces de entrada.
-- Interfaces de salida.
-- Tecnologías externas.
-
-Las tecnologías concretas utilizadas por el prototipo podrán cambiar durante el proceso de desarrollo sin modificar directamente las reglas centrales del negocio.
-
-Los detalles técnicos completos de la arquitectura se encuentran en:
-
-`docs/arquitectura/arquitectura.md`
+Para la interfaz esto significa que el detalle del evento combina dos fuentes: los datos estáticos
+del evento y la disponibilidad actual. La UI no debe presentar la capacidad total como si fuera
+disponibilidad.
 
 ---
 
-# 16. Tecnologías conceptuales
+## 10. Reglas de negocio relevantes para la UI
 
-El proyecto contempla inicialmente:
-
-- Microservicios.
-- Arquitectura hexagonal.
-- API REST.
-- PostgreSQL.
-- Redis.
-- JWT.
-- Contenedores.
-- Herramientas de pruebas de carga.
-- Herramientas de monitoreo.
-- Inteligencia Artificial.
-
-La elección definitiva de tecnologías debe justificarse de acuerdo con los requisitos y atributos de calidad.
-
----
-
-# 17. Restricciones del proyecto
-
-El proyecto tiene las siguientes restricciones:
-
-1. El equipo está compuesto por tres personas.
-
-2. El prototipo tiene aproximadamente seis semanas para su implementación principal.
-
-3. El proyecto tiene carácter académico.
-
-4. El sistema debe ser suficientemente pequeño para poder ser implementado y evaluado dentro del tiempo disponible.
-
-5. No se busca construir una plataforma comercial completa.
-
-6. No se implementarán integraciones financieras reales.
-
-7. Las pruebas de alta demanda se realizarán mediante escenarios controlados.
-
-8. La Inteligencia Artificial será utilizada como apoyo al proceso de ingeniería de software y análisis del comportamiento del sistema.
+| Regla | Implicación en la interfaz |
+|---|---|
+| RB-01 Identificación de usuarios | Cada usuario se identifica por su cuenta autenticada. |
+| RB-02 Correo único | El registro informa si el correo ya existe. |
+| RB-03 Contraseñas | La UI nunca muestra ni registra la contraseña en texto plano; usa campos de tipo password. |
+| RB-04 Autenticación | Las rutas y acciones protegidas exigen sesión; `401` redirige a login. |
+| RB-05 Roles | La UI oculta o deshabilita acciones según el rol; un `403` muestra acceso denegado. |
+| RB-06 Organización de eventos | Solo el organizador autorizado ve las acciones de gestión. |
+| RB-07 Capacidad | El formulario de localidad exige una capacidad mayor que cero. |
+| RB-08 Disponibilidad no negativa | La UI no permite cantidades que dejen la disponibilidad en negativo. |
+| RB-09 Reserva | Solo se puede confirmar si hay disponibilidad suficiente. |
+| RB-10 Concurrencia | La UI evita dobles envíos y refresca el estado tras un conflicto. |
+| RB-11 No sobreventa | El rechazo por falta de disponibilidad se comunica con claridad. |
+| RB-12 Inventario como fuente de verdad | La disponibilidad mostrada proviene del backend; la UI no la calcula. |
+| RB-13 Persistencia | La UI no persiste reservas; refleja el estado confirmado por el backend. |
+| RB-14 Disponibilidad rápida | La consulta de disponibilidad no debe bloquear la navegación. |
+| RB-15 Independencia de servicios | La UI consume un único punto de entrada (API Gateway). |
 
 ---
 
-# 18. Funcionalidades fuera del alcance
+## 11. Escenario crítico
 
-Las siguientes funcionalidades no forman parte del alcance principal del prototipo:
+Se abre la venta de un evento altamente demandado y cientos o miles de usuarios intentan reservar
+al mismo tiempo en un periodo corto.
 
-- Pagos reales.
-- Integración con bancos.
-- Facturación.
-- Procesamiento de tarjetas.
-- Aplicación móvil.
-- Sistema real de emisión de entradas.
-- Códigos QR reales.
-- Notificaciones por SMS.
-- Notificaciones por correo.
+Desde la interfaz se espera:
+
+- Que el catálogo y el detalle sigan respondiendo.
+- Que la disponibilidad se muestre actualizada o se indique que se está actualizando.
+- Que solo las reservas confirmadas por el backend se muestren como exitosas.
+- Que los rechazos por falta de disponibilidad sean claros y accionables.
+- Que los errores de servicio se comuniquen sin bloquear la aplicación.
+
+---
+
+## 12. Restricciones del proyecto
+
+1. Equipo de tres personas.
+2. Prototipo con aproximadamente seis semanas para su implementación principal.
+3. Proyecto académico, no una plataforma comercial.
+4. El sistema debe ser suficientemente pequeño para implementarse y evaluarse en el tiempo
+   disponible.
+5. No se implementan integraciones financieras reales.
+6. Las pruebas de alta demanda se realizan con escenarios controlados (responsabilidad del
+   backend).
+7. La Inteligencia Artificial se usa como apoyo al proceso de ingeniería, no como excusa para
+   inventar requisitos.
+
+---
+
+## 13. Fuera de alcance
+
+- Pagos reales, integración con bancos, facturación y procesamiento de tarjetas.
+- Aplicación móvil nativa.
+- Emisión real de entradas y códigos QR.
+- Notificaciones por correo o SMS.
 - Integración con plataformas externas de eventos.
 - Recomendaciones personalizadas.
-- Elasticsearch.
-- Kafka.
-- Kubernetes.
-- Arquitecturas excesivamente complejas que no sean necesarias para el experimento.
-
-Estas funcionalidades podrían considerarse como trabajo futuro.
+- Pruebas de carga y análisis de rendimiento del backend.
+- Arquitectura de microservicios, inventario, caché, mensajería y observabilidad (pertenecen a los
+  repositorios de backend).
 
 ---
 
-# 19. Propósito de la Inteligencia Artificial
-
-La Inteligencia Artificial no constituye únicamente una funcionalidad del sistema.
-
-Su propósito principal dentro del proyecto es apoyar el proceso de ingeniería de software y el análisis operacional.
-
-La IA podrá utilizarse para:
-
-- Apoyar el análisis de requisitos.
-- Apoyar el diseño arquitectónico.
-- Analizar atributos de calidad.
-- Identificar posibles riesgos.
-- Analizar métricas de operación.
-- Detectar patrones de sobrecarga.
-- Identificar anomalías.
-- Generar recomendaciones de optimización.
-- Apoyar el análisis de resultados de pruebas.
-
-La IA no debe inventar requisitos o funcionalidades que no hayan sido definidos en los documentos del proyecto.
-
----
-
-# 20. Metodología del proyecto
-
-La metodología combina diferentes prácticas de ingeniería de software.
-
-## Attribute-Driven Design (ADD)
-
-ADD se utilizará para diseñar la arquitectura a partir de los atributos de calidad prioritarios.
-
-Los principales atributos considerados son:
-
-- Escalabilidad.
-- Disponibilidad.
-- Rendimiento.
-- Latencia.
-- Concurrencia.
-- Consistencia.
-- Observabilidad.
-
-## Spec-Driven Development (SDD)
-
-SDD se utilizará para definir explícitamente:
-
-- Requisitos.
-- Contratos.
-- Comportamientos esperados.
-- Criterios de aceptación.
-- Interfaces.
-
-## AIOps
-
-Se utilizará un enfoque inspirado en AIOps para analizar métricas y eventos operativos.
-
-El propósito será identificar patrones y apoyar decisiones relacionadas con:
-
-- Escalabilidad.
-- Optimización.
-- Detección de anomalías.
-- Capacidad.
-
----
-
-# 21. Principio para la IA asistente
-
-Los documentos de este proyecto deben ser considerados como la fuente de contexto del sistema.
-
-La IA debe:
+## 14. Principios para la IA
 
 1. Respetar el alcance definido.
-
-2. No inventar funcionalidades.
-
-3. No agregar microservicios que no hayan sido aprobados.
-
-4. No introducir tecnologías innecesarias.
-
-5. Priorizar soluciones simples y apropiadas para un prototipo académico.
-
-6. Mantener la separación entre los microservicios.
-
-7. Mantener la separación entre dominio y tecnología establecida por la arquitectura hexagonal.
-
-8. Considerar los atributos de calidad como parte fundamental del diseño.
-
-9. Mantener la regla de no sobreventa.
-
-10. Explicar las decisiones técnicas relacionándolas con los requisitos y atributos de calidad.
+2. No inventar funcionalidades ni roles.
+3. No asumir el stack ni el sistema de diseño: proponer `DA-xxx` y esperar aprobación.
+4. Priorizar soluciones simples y apropiadas para un prototipo académico.
+5. Mantener la regla de no sobreventa visible en la interfaz.
+6. Diferenciar siempre entre información definida, suposición, propuesta y decisión aprobada.
+7. Explicar las decisiones de UI relacionándolas con los requisitos y atributos de calidad.
 
 ---
 
-# 22. Fuente de verdad
+## 15. Fuente de verdad
 
-En caso de conflicto entre propuestas generadas por una IA y los documentos del proyecto, deben priorizarse los requisitos y decisiones explícitamente establecidos en los documentos.
-
-La IA puede proponer mejoras, pero debe identificarlas como propuestas y no asumir que forman parte del sistema.
+En caso de conflicto entre propuestas de la IA y los documentos del proyecto, prevalecen los
+requisitos y decisiones explícitamente establecidos en `docs_ia`. La IA puede proponer mejoras,
+pero debe identificarlas como propuestas y no asumir que forman parte del sistema.
 
 ---
 
-# 23. Estado actual del proyecto
+## 16. Estado actual
 
-El proyecto se encuentra en etapa de diseño y planificación del prototipo.
-
-La arquitectura inicial está definida como:
-
-- Microservicios.
-- Arquitectura hexagonal.
-- Users.
-- Catalog.
-- Inventory.
-
-La implementación y las decisiones técnicas detalladas se documentarán progresivamente.
+El repositorio contiene únicamente documentación: no hay código ni stack definido. El siguiente
+paso es aprobar las decisiones pendientes (stack, sistema de diseño, estrategia de pruebas y
+contrato de consumo) antes de implementar.

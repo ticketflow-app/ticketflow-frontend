@@ -7,22 +7,62 @@ Frontend web de TicketFlow (interfaz de usuario de la plataforma de venta de bol
 | Campo | Valor |
 |---|---|
 | Rol | Frontend web (UI de TicketFlow) |
-| Stack | **Pendiente de definir** (no asumir: debe proponerse como `docs_ia/decisiones/DA-xxx`) |
-| Consume | API Gateway (`http://localhost:8080`); CORS del gateway hoy solo permite `http://localhost:8081` |
-| Dep. de | `docs_ia/contexto` (specs de plataforma) |
+| Stack | Next.js 16 (App Router) + TypeScript + Tailwind + shadcn/ui + TanStack Query + Zustand + MSW (DA-001, APROBADA) |
+| Consume | API Gateway a través del **BFF** de Next.js (`/api/*`); el gateway (`http://localhost:8080`) no lo llama el navegador |
+| Dep. de | `docs_ia/contexto` (specs del frontend), API Gateway |
+| Puerto dev | `http://localhost:3000` |
 
-> El stack, la arquitectura del frontend, la estrategia de pruebas y el contrato de consumo del gateway **no están definidos**. No los asumas ni los decidas de forma autónoma: propón una `DA-xxx` en `docs_ia/decisiones` y espera aprobación.
+> El stack y la arquitectura base están definidos en `docs_ia/decisiones/DA-001-stack-frontend.md`
+> (APROBADA e IMPLEMENTADA). Cualquier cambio arquitectónico posterior debe proponerse como una
+> nueva `DA-xxx` y esperar aprobación humana.
 
 ## Docs
 
-- `docs_ia/README.md` — índice y pendientes del frontend.
-- `docs_ia/contexto/` — specs de plataforma (negocio, requisitos, arquitectura, calidad, pruebas).
+- `docs_ia/README.md` — índice, estructura y decisiones pendientes del frontend.
+- `docs_ia/contexto/` — specs **del frontend** (negocio, funcionalidades, diseño, requisitos,
+  calidad, pruebas y contrato de API). No contiene arquitectura de backend ni pruebas de carga.
+- `docs_ia/contexto/funcionalidades.md` — alcance funcional, roles, pantallas, flujos y prioridad.
+- `docs_ia/contexto/diseno.md` — principios UI/UX, navegación, pantallas, componentes y estados.
+- `docs_ia/contexto/contrato_api.md` — endpoints reales, auth, errores y huecos del backend.
 - `docs_ia/decisiones/` — decisiones arquitectónicas (`DA-xxx`).
 - `docs_ia/prompts/` — trazabilidad de uso de IA (`P-xxx`).
 
 ## Comandos
 
-Pendientes de definir junto con el stack (se documentarán aquí cuando exista `package.json`).
+```powershell
+npm run dev          # servidor de desarrollo en http://localhost:3000
+npm run build        # build de producción
+npm run start        # servir el build
+npm run lint         # ESLint
+npm run typecheck    # tsc --noEmit
+npm run test         # Vitest (unitarias/componentes con MSW)
+npm run test:e2e     # Playwright (requiere `npx playwright install`)
+```
+
+## Arquitectura del frontend
+
+- **BFF (Backend For Frontend)**: el navegador nunca llama al gateway. `src/app/api/auth/*` y
+  `src/app/api/gateway/[...path]/route.ts` reenvían al gateway y adjuntan el token.
+- **Token en cookie `httpOnly`**: se guarda al hacer login y no es accesible desde JavaScript.
+  El layout resuelve la sesión en el servidor (`getCurrentUser`) y la inyecta en Zustand.
+- **MSW**: simula los endpoints que el backend aún no expone (catálogo, detalle, disponibilidad
+  pública e historial) cuando `NEXT_PUBLIC_API_MOCKING=enabled`.
+- **Variables de entorno**: `API_GATEWAY_URL` (servidor), `AUTH_COOKIE_NAME`,
+  `NEXT_PUBLIC_API_MOCKING`, `NEXT_PUBLIC_API_BASE_URL`. Ver `.env.example`.
+
+### Estructura
+
+```
+src/
+├── app/          # rutas Next.js (App Router) + Route Handlers del BFF
+├── components/   # UI (shadcn) y layout
+├── features/     # auth, events, reservations (api + hooks + componentes)
+├── lib/          # api (client/BFF/gateway), auth (sesión), config, formato
+├── mocks/        # MSW: handlers, datos y worker
+├── stores/       # Zustand (sesión)
+└── test/         # setup de Vitest
+e2e/              # pruebas Playwright
+```
 
 ## Gobernanza (para OpenCode)
 
@@ -123,11 +163,12 @@ Pendientes de definir junto con el stack (se documentarán aquí cuando exista `
 
 ## Grafo (codebase-memory)
 
-- Proyecto de grafo: `frontend` (**pendiente de indexar**: el repo aún no tiene código).
+- Proyecto de grafo: `frontend` (el repo ya tiene código: **indexar** con
+  `index_repository(repo_path="ticketflow-frontend", mode="full", name="frontend")`).
 - Este repo es git → `detect_changes --base-branch main` funcionará contra este proyecto cuando esté indexado.
 - Arquitectura entre servicios → consulta cada proyecto por separado y correlaciona tú; **no hay proyecto padre**.
 - **Cambiar de rama NO refresca el grafo automáticamente** (el watcher sigue la raíz, que no es git). Tras `git checkout` o editar, fuerza re-index: `index_repository(repo_path="ticketflow-frontend", mode="full", name="frontend")`.
-- Sincronización global: `pwsh -File .\sync-graph.ps1` desde la raíz (hoy re-indexa los 4 servicios backend; el frontend se añadirá cuando exista código).
+- Sincronización global: `pwsh -File .\sync-graph.ps1` desde la raíz (hoy re-indexa los 4 servicios backend; añade el frontend cuando se incorpore al script).
 
 ## No tocar
 

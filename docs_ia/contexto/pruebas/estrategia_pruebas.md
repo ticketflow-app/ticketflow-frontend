@@ -1,141 +1,144 @@
-# Estrategia de Pruebas
+# Estrategia de Pruebas del Frontend
 
 ## 1. Propósito
 
-La estrategia de pruebas tiene como objetivo verificar que el sistema cumple los requisitos funcionales y los atributos de calidad definidos.
+Este documento define cómo se verifica el frontend de TicketFlow. Sustituye a la estrategia de
+plataforma, centrada en pruebas unitarias de backend, Testcontainers, integración con PostgreSQL,
+Redis y Kafka, y pruebas de concurrencia y carga.
 
-Se utilizarán diferentes niveles de prueba.
+El frontend **no** prueba la concurrencia ni la consistencia del inventario: esas pruebas
+pertenecen a los servicios de backend. Aquí se prueba que la interfaz represente correctamente el
+estado que recibe y que los flujos de usuario funcionen.
 
----
-
-# 2. Pruebas unitarias
-
-Validarán componentes individuales.
-
-Se probarán principalmente:
-
-- Entidades.
-- Reglas de negocio.
-- Casos de uso.
-- Validaciones.
-- Manejo de errores.
-
-Las pruebas unitarias no deben depender de servicios externos reales.
+> El stack y las herramientas de prueba aún no están decididos. Este documento define **qué** hay
+> que probar y **cómo se organiza**; la elección de herramientas requiere una `DA-xxx` aprobada.
 
 ---
 
-# 3. Pruebas de integración
+## 2. Principios
 
-Validarán la interacción entre componentes.
-
-Se probarán:
-
-- PostgreSQL.
-- Redis.
-- Repositorios.
-- APIs.
-- Comunicación entre componentes.
+1. Probar el comportamiento visible para el usuario, no detalles de implementación.
+2. Priorizar los flujos críticos: autenticación, consulta de disponibilidad, reserva y
+   cancelación.
+3. Probar los estados de error y borde: `401`, `403`, `404`, `409`, `503`, timeout y red caída.
+4. No simular éxito cuando el backend falla.
+5. Mantener las pruebas rápidas y deterministas; los servicios externos se simulan.
+6. No introducir herramientas sin analizar necesidad, compatibilidad y aprobación humana.
 
 ---
 
-# 4. Pruebas de API
+## 3. Niveles de prueba
 
-Validarán los endpoints REST.
+### 3.1 Unitarias
 
-Se comprobarán:
+- Funciones puras: validaciones de formularios, formateo de fechas y precios, cálculos de cantidad.
+- Hooks o utilidades de estado, sin renderizar la interfaz.
+- No requieren backend ni navegador.
 
-- Códigos HTTP.
-- Estructuras de respuesta.
-- Validaciones.
-- Autenticación.
-- Autorización.
-- Errores.
+### 3.2 Pruebas de componentes
 
----
+- Renderizado de componentes con distintos estados: cargando, vacío, error, éxito.
+- Interacción: escribir, seleccionar, enviar, deshabilitar botones.
+- Accesibilidad básica: etiquetas, roles, foco y anuncios.
+- Servicios simulados (mocks) para las respuestas del backend.
 
-# 5. Pruebas funcionales
+### 3.3 Pruebas de integración de UI
 
-Validarán las historias de usuario.
+- Flujos que combinan varias pantallas o componentes con datos simulados.
+- Navegación protegida por sesión y por rol.
+- Manejo de `401`, `403`, `404`, `409` y `503`.
 
-Cada historia de usuario priorizada debe tener casos de prueba asociados.
+### 3.4 Pruebas end-to-end (E2E)
 
----
+- Flujo completo de compra contra un entorno controlado.
+- Flujo de organización: crear evento con localidades y capacidades.
+- Flujo de administración: cambio de rol.
+- Deben ser pocas y estables; cubren los caminos críticos.
 
-# 6. Pruebas de concurrencia
+### 3.5 Accesibilidad
 
-Se utilizarán para verificar la operación crítica de reserva.
+- Navegación completa por teclado.
+- Foco visible y atrapado en diálogos.
+- Contraste y etiquetas.
+- Anuncios de resultados asíncronos.
+- Automatización cuando la herramienta lo permita; complementar con revisión manual.
 
-El objetivo principal es comprobar que:
+### 3.6 Pruebas visuales (opcional)
 
-- No existe sobreventa.
-- No existen reservas duplicadas incorrectamente.
-- La disponibilidad final es correcta.
-- El sistema soporta múltiples solicitudes simultáneas.
-
----
-
-# 7. Pruebas de carga
-
-Permitirán evaluar el comportamiento bajo diferentes niveles de solicitudes.
-
-Se considerarán:
-
-- Carga normal.
-- Carga sostenida.
-- Incremento progresivo.
-- Incremento repentino.
-- Pico de tráfico.
+- Regresión visual de pantallas clave si el stack lo permite.
+- No es obligatoria para el MVP.
 
 ---
 
-# 8. Métricas
+## 4. Qué probar por funcionalidad
 
-Las pruebas recopilarán:
-
-- Latencia promedio.
-- P50.
-- P95.
-- P99.
-- Throughput.
-- Tasa de errores.
-- CPU.
-- Memoria.
-- Tiempo de recuperación.
-
----
-
-# 9. Criterio de éxito
-
-Los criterios definitivos serán definidos antes de ejecutar las pruebas finales.
-
-No se deben inventar umbrales de rendimiento sin justificarlos experimentalmente o académicamente.
+| Funcionalidad | Pruebas mínimas |
+|---|---|
+| Registro | Validación de campos, correo existente, éxito y redirección |
+| Inicio de sesión | Credenciales válidas e inválidas, redirección, sesión expirada |
+| Perfil | Renderizado por rol, ruta protegida |
+| Catálogo | Carga, vacío, error, búsqueda, filtros, paginación |
+| Detalle de evento | Datos, disponibilidad, agotado, `404` |
+| Reserva | Cantidad válida, doble clic, éxito, `409`, `401`, `503` |
+| Mis reservas | Lista, vacío, detalle, estados |
+| Cancelación | Confirmación, éxito, no cancelable, error |
+| Gestión de eventos | Validaciones, localidades, capacidad, permisos |
+| Administración | Listado, cambio de rol, `403` |
 
 ---
 
-# 10. Repetibilidad
+## 5. Casos críticos
 
-Cada escenario importante debe poder ejecutarse más de una vez bajo condiciones similares.
-
-Se deben documentar:
-
-- Configuración.
-- Número de usuarios.
-- Duración.
-- Tipo de tráfico.
-- Datos utilizados.
-- Recursos disponibles.
-- Resultados.
+1. **No sobreventa desde la UI:** si el backend rechaza por falta de disponibilidad (`409`), la UI
+   no muestra la reserva como confirmada y refresca el estado.
+2. **Doble envío:** dos clics en "Reservar" producen una sola solicitud.
+3. **Sesión expirada:** una acción protegida con `401` redirige a login y conserva la intención.
+4. **Servicio caído:** un `503` o timeout muestra error con reintento, nunca un falso éxito.
+5. **Permisos:** un comprador no ve ni ejecuta acciones de organizador o administrador.
+6. **Accesibilidad:** el flujo de compra se completa solo con teclado.
+7. **Responsive:** el flujo de compra funciona a 360 px.
 
 ---
 
-# 11. Comparación
+## 6. Datos y simulación de servicios
 
-Los resultados deben permitir comparar el comportamiento del sistema ante diferentes niveles de carga.
+- Los datos de prueba deben ser explícitos y reproducibles.
+- Las respuestas del backend se simulan (mocks o interceptores) para cubrir éxito y errores.
+- Los escenarios de concurrencia se representan como respuestas `409`, no como concurrencia real
+  en el navegador.
+- No se usan datos reales de usuarios ni credenciales de producción.
 
-Por ejemplo:
+---
 
-```text
-Carga baja
-Carga media
-Carga alta
-Pico
+## 7. Herramientas (pendiente de decisión)
+
+Candidatos a evaluar cuando se elija el stack:
+
+- Framework de pruebas unitarias y de componentes.
+- Librería de testing de componentes de UI.
+- Herramienta de mocking de red.
+- Framework E2E.
+- Herramienta de accesibilidad automatizada.
+
+La selección requiere una `DA-xxx` con análisis de necesidad, compatibilidad, impacto y
+alternativas. **No se instala ninguna herramienta sin aprobación humana explícita.**
+
+---
+
+## 8. Integración continua (pendiente)
+
+- Ejecutar pruebas unitarias y de componentes en cada cambio.
+- Ejecutar E2E en los flujos críticos antes de integrar.
+- Publicar resultados y cobertura cuando exista pipeline.
+- La plataforma de CI/CD no está definida.
+
+---
+
+## 9. Fuera de alcance
+
+- Pruebas de carga y estrés del sistema.
+- Pruebas de concurrencia del inventario.
+- Pruebas de integración con PostgreSQL, Redis o Kafka.
+- Pruebas de rendimiento de microservicios.
+
+Estas pruebas pertenecen a los repositorios de backend y se documentan allí.

@@ -1,151 +1,181 @@
-# Atributos de Calidad
+# Atributos de Calidad del Frontend
 
 ## 1. Propósito
 
-Este documento define los atributos de calidad prioritarios para el proyecto.
+Este documento define los atributos de calidad que aplican al frontend de TicketFlow y cómo se
+verifican. Sustituye a la versión de plataforma, que estaba centrada en atributos de backend
+(throughput, CPU, concurrencia de inventario, observabilidad).
 
-Estos atributos orientarán las decisiones arquitectónicas mediante ADD y serán evaluados mediante pruebas.
-
----
-
-# 2. Escalabilidad
-
-## Definición
-
-Capacidad del sistema para soportar incrementos en la cantidad de usuarios y solicitudes sin degradarse de manera inaceptable.
-
-## Importancia
-
-Es uno de los atributos principales debido al escenario de alta demanda.
-
-## Indicadores
-
-- Throughput.
-- Uso de CPU.
-- Uso de memoria.
-- Tiempo de respuesta.
-- Número de solicitudes concurrentes.
-- Tasa de errores.
+Los atributos de backend (escalabilidad del sistema, consistencia del inventario, latencia del
+servicio) se documentan y evalúan en los repositorios de los servicios correspondientes. Aquí solo
+se consideran los que el frontend puede influir o debe reflejar.
 
 ---
 
-# 3. Disponibilidad
+## 2. Usabilidad
 
-## Definición
+**Definición:** el usuario completa sus tareas (encontrar un evento, reservar, cancelar, gestionar)
+con el mínimo esfuerzo y sin ambigüedad.
 
-Capacidad del sistema para continuar respondiendo solicitudes durante periodos de carga.
+**Importancia:** es el atributo principal de la interfaz; un flujo confuso genera reservas
+duplicadas o abandono.
 
-## Indicadores
+**Indicadores:**
 
-- Porcentaje de solicitudes exitosas.
-- Tiempo fuera de servicio.
-- Tasa de errores.
-- Capacidad de recuperación.
+- Pasos para completar una reserva.
+- Tasa de errores de formulario.
+- Abandono en el flujo de compra.
+- Claridad de los mensajes (comprensión sin soporte).
 
----
-
-# 4. Latencia
-
-## Definición
-
-Tiempo transcurrido desde que el sistema recibe una solicitud hasta que entrega una respuesta.
-
-## Indicadores
-
-- Promedio.
-- Mediana.
-- P95.
-- P99.
-- Máximo.
-
-Los percentiles serán importantes porque el promedio puede ocultar solicitudes extremadamente lentas.
+**Verificación:** pruebas de usabilidad con tareas guiadas y revisión de flujos.
 
 ---
 
-# 5. Rendimiento
+## 3. Accesibilidad
 
-## Definición
+**Definición:** la interfaz puede ser usada por personas con distintas capacidades, incluyendo
+navegación por teclado y lectores de pantalla.
 
-Capacidad del sistema para procesar solicitudes eficientemente.
+**Importancia:** requisito de calidad y de inclusión; además mejora la semántica y la
+mantenibilidad.
 
-## Indicadores
+**Indicadores:**
 
-- Requests por segundo.
-- Tiempo de respuesta.
-- Tasa de errores.
-- Consumo de CPU.
-- Consumo de memoria.
+- Campos con etiqueta asociada.
+- Navegación completa por teclado.
+- Foco visible y orden lógico.
+- Contraste suficiente.
+- Mensajes anunciados (`aria-live`).
 
----
+**Verificación:** revisión manual con teclado y lector de pantalla; pruebas automatizadas de
+accesibilidad cuando el stack lo permita.
 
-# 6. Concurrencia
-
-## Definición
-
-Capacidad del sistema para procesar múltiples solicitudes simultáneamente sin producir resultados incorrectos.
-
-## Principal preocupación
-
-La reserva concurrente de entradas.
-
-El sistema debe impedir que varias solicitudes consuman las mismas entradas.
+El nivel de conformidad objetivo (por ejemplo, WCAG 2.1 AA) es una decisión pendiente.
 
 ---
 
-# 7. Consistencia
+## 4. Responsividad
 
-## Definición
+**Definición:** la interfaz se adapta a distintos tamaños de pantalla sin perder funcionalidad.
 
-Capacidad del sistema para mantener el inventario y las reservas coherentes.
+**Importancia:** el flujo de compra debe funcionar en móvil, donde ocurre gran parte del tráfico.
 
-## Regla principal
+**Indicadores:**
 
-La cantidad reservada no puede superar la capacidad disponible.
+- Flujo completo usable a 360 px de ancho.
+- Sin scroll horizontal.
+- Controles táctiles con tamaño adecuado.
 
----
-
-# 8. Observabilidad
-
-## Definición
-
-Capacidad para conocer el estado interno del sistema mediante métricas y registros.
-
-## Métricas
-
-- CPU.
-- Memoria.
-- Latencia.
-- Throughput.
-- Errores.
-- Número de solicitudes.
-- Disponibilidad.
-- Estado del inventario.
+**Verificación:** pruebas en viewports representativos y revisión visual.
 
 ---
 
-# 9. Mantenibilidad
+## 5. Rendimiento percibido
 
-Aunque no es el principal foco experimental, la arquitectura debe facilitar modificaciones.
+**Definición:** la interfaz responde rápido desde la perspectiva del usuario, incluso cuando el
+backend tarda.
 
-La arquitectura hexagonal permite modificar adaptadores sin modificar directamente la lógica de negocio.
+**Importancia:** en picos de demanda la latencia real aumenta; la percepción debe seguir siendo de
+fluidez.
+
+**Indicadores:**
+
+- Tiempo hasta el primer contenido útil.
+- Uso de skeletons en cargas.
+- Búsqueda con debounce.
+- Sin bloqueos de la UI durante peticiones.
+
+**Verificación:** medición de métricas de carga en el navegador y pruebas con latencia simulada.
 
 ---
 
-# 10. Priorización
+## 6. Disponibilidad y robustez de la interfaz
 
-Prioridad alta:
+**Definición:** la aplicación sigue siendo usable y comprensible cuando un servicio falla o
+responde lento.
 
-- Escalabilidad.
-- Concurrencia.
-- Consistencia.
-- Rendimiento.
-- Latencia.
+**Importancia:** el backend puede devolver `503`, timeouts o errores; la UI no debe romperse ni
+mostrar datos falsos.
 
-Prioridad media:
+**Indicadores:**
 
-- Disponibilidad.
-- Observabilidad.
+- Estados de error con reintento.
+- Manejo de `401`, `403`, `404`, `409`, `503`.
+- Recuperación sin recargar toda la aplicación.
+- Ningún éxito simulado ante fallo.
 
-Prioridad complementaria:
+**Verificación:** pruebas con respuestas simuladas de error y timeout.
 
-- Mantenibilidad.
+---
+
+## 7. Consistencia
+
+**Definición:** la interfaz muestra un estado coherente entre pantallas y tras cada operación.
+
+**Importancia:** una disponibilidad desactualizada o un estado duplicado induce sobreventa o
+reservas duplicadas.
+
+**Indicadores:**
+
+- Refresco de disponibilidad tras reservar o cancelar.
+- Una sola representación del estado de una reserva.
+- Fuente única de verdad para el estado de sesión.
+
+**Verificación:** pruebas de flujo completo y de conflictos (`409`).
+
+---
+
+## 8. Seguridad (lado cliente)
+
+**Definición:** la interfaz protege la sesión y no expone información sensible ni permite acciones
+no autorizadas.
+
+**Importancia:** el frontend es la superficie de entrada del usuario.
+
+**Indicadores:**
+
+- Token adjunto solo a peticiones protegidas.
+- Cierre de sesión limpia el estado.
+- Acciones ocultas/deshabilitadas según rol.
+- Sin secretos ni datos sensibles en el código o en logs.
+- Contraseñas en campos de tipo password.
+
+**Verificación:** revisión de flujos de autenticación y de permisos; pruebas de `401`/`403`.
+
+La estrategia de almacenamiento del token es una decisión pendiente.
+
+---
+
+## 9. Mantenibilidad
+
+**Definición:** la interfaz es fácil de entender, modificar y probar.
+
+**Importancia:** el prototipo evoluciona rápido y con un equipo pequeño.
+
+**Indicadores:**
+
+- Componentes con responsabilidad única.
+- Nomenclatura consistente en inglés.
+- Pruebas de componentes y flujos críticos.
+- Separación entre presentación, estado y acceso a datos.
+
+**Verificación:** revisión de código y cobertura de pruebas cuando exista implementación.
+
+---
+
+## 10. Escalabilidad de la interfaz
+
+**Definición:** la interfaz soporta más usuarios y más datos sin degradarse de forma perceptible.
+
+**Importancia:** el catálogo y las reservas crecen durante el prototipo.
+
+**Indicadores:**
+
+- Paginación en listados.
+- Carga bajo demanda.
+- Evitar renderizar listas completas innecesariamente.
+
+**Verificación:** pruebas con volúmenes de datos representativos.
+
+> La escalabilidad del sistema (throughput, concurrencia, inventario) **no** se evalúa desde este
+> repositorio.

@@ -1,167 +1,146 @@
-# Escenarios de Calidad
+# Escenarios de Calidad del Frontend
 
 ## 1. Propósito
 
-Este documento define escenarios concretos para evaluar los atributos de calidad.
+Este documento describe escenarios concretos que permiten evaluar los atributos de calidad de la
+interfaz (`atributos_calidad.md`). Sustituye a la versión de plataforma, centrada en concurrencia,
+carga y disponibilidad del backend.
+
+Formato: **estímulo → respuesta esperada → medida**.
 
 ---
 
-# 2. Escenario de alta concurrencia
+## EC-01 — Pico de tráfico durante la venta
 
-## Atributo
-
-Concurrencia.
-
-## Estímulo
-
-Múltiples usuarios intentan reservar simultáneamente entradas de la misma localidad.
-
-## Entorno
-
-Sistema desplegado en contenedores.
-
-## Respuesta esperada
-
-Las operaciones deben procesarse sin sobreventa.
-
-## Medición
-
-- Reservas exitosas.
-- Reservas rechazadas.
-- Disponibilidad final.
-- Errores.
+- **Atributo:** rendimiento percibido / disponibilidad.
+- **Estímulo:** muchos usuarios consultan el catálogo y el detalle al mismo tiempo.
+- **Respuesta esperada:** la interfaz sigue navegable, muestra skeletons mientras carga y no
+  bloquea acciones ya disponibles; los errores se muestran sin romper la pantalla.
+- **Medida:** el flujo de consulta no se congela; el usuario puede seguir navegando o reintentar.
 
 ---
 
-# 3. Escenario de disponibilidad limitada
+## EC-02 — La disponibilidad cambia mientras el usuario decide
 
-## Atributo
-
-Consistencia.
-
-## Estímulo
-
-Existe una cantidad pequeña de entradas disponibles y múltiples usuarios realizan reservas.
-
-## Respuesta esperada
-
-El sistema debe permitir reservas únicamente hasta agotar la disponibilidad.
-
-## Medición
-
-La suma de entradas reservadas no debe superar la capacidad inicial.
+- **Atributo:** consistencia.
+- **Estímulo:** otro usuario compra las últimas entradas entre la consulta y la confirmación.
+- **Respuesta esperada:** al confirmar, el backend rechaza (`409`); la UI informa y refresca la
+  disponibilidad; no muestra la reserva como exitosa.
+- **Medida:** cero reservas mostradas como confirmadas sin confirmación del backend.
 
 ---
 
-# 4. Escenario de carga sostenida
+## EC-03 — Intento de reserva sin disponibilidad
 
-## Atributo
-
-Rendimiento.
-
-## Estímulo
-
-Número constante de solicitudes durante un periodo determinado.
-
-## Respuesta esperada
-
-El sistema debe mantener un comportamiento estable.
-
-## Medición
-
-- Latencia.
-- Throughput.
-- Errores.
-- CPU.
-- Memoria.
+- **Atributo:** usabilidad / consistencia.
+- **Estímulo:** el usuario elige una cantidad mayor a la disponible o la localidad se agota.
+- **Respuesta esperada:** la UI impide cantidades inválidas y, si el backend rechaza, muestra un
+  mensaje claro con la acción siguiente (ajustar cantidad o elegir otra localidad).
+- **Medida:** el usuario entiende el motivo y puede continuar sin recargar la página.
 
 ---
 
-# 5. Escenario de incremento repentino
+## EC-04 — Servicio no disponible o timeout
 
-## Atributo
-
-Escalabilidad.
-
-## Estímulo
-
-Incremento rápido del número de usuarios.
-
-## Respuesta esperada
-
-El sistema debe continuar respondiendo dentro de los límites definidos.
-
-## Medición
-
-- P95.
-- P99.
-- Throughput.
-- Errores.
-- Recursos.
+- **Atributo:** robustez.
+- **Estímulo:** el backend responde `503` o no responde dentro del tiempo esperado.
+- **Respuesta esperada:** estado de error con opción de reintentar; no se pierde lo ingresado; no
+  se simula éxito.
+- **Medida:** la aplicación sigue usable y el reintento funciona cuando el servicio vuelve.
 
 ---
 
-# 6. Escenario de pico de tráfico
+## EC-05 — Sesión expirada durante una acción
 
-## Atributo
-
-Disponibilidad y escalabilidad.
-
-## Estímulo
-
-Una gran cantidad de solicitudes durante un intervalo corto.
-
-## Respuesta esperada
-
-El sistema debe continuar procesando solicitudes y recuperarse después del pico.
-
-## Medición
-
-- Tasa de errores.
-- Latencia.
-- Throughput.
-- Tiempo de recuperación.
+- **Atributo:** seguridad / usabilidad.
+- **Estímulo:** el usuario intenta reservar o gestionar con un token expirado (`401`).
+- **Respuesta esperada:** se informa que la sesión expiró y se redirige a login conservando la
+  intención (evento, localidad y cantidad cuando sea posible).
+- **Medida:** tras autenticarse, el usuario retoma el flujo sin empezar de cero.
 
 ---
 
-# 7. Escenario de recuperación
+## EC-06 — Usuario sin permisos
 
-## Atributo
-
-Disponibilidad.
-
-## Estímulo
-
-Reducción de la disponibilidad de recursos o finalización de un periodo de saturación.
-
-## Respuesta esperada
-
-El sistema debe retornar progresivamente a condiciones normales.
-
-## Medición
-
-- Tiempo de recuperación.
-- Latencia posterior.
-- Tasa de errores.
+- **Atributo:** seguridad.
+- **Estímulo:** un comprador intenta acceder a una ruta de organizador o administrador.
+- **Respuesta esperada:** la UI oculta o deshabilita la acción y, si el backend responde `403`,
+  muestra acceso denegado sin filtrar información.
+- **Medida:** ninguna acción administrativa visible para roles no autorizados.
 
 ---
 
-# 8. Escenario de consulta de disponibilidad
+## EC-07 — Doble envío de una reserva
 
-## Atributo
+- **Atributo:** consistencia.
+- **Estímulo:** el usuario hace doble clic en "Reservar".
+- **Respuesta esperada:** el botón se deshabilita tras el primer envío y se muestra estado en
+  curso; se envía una sola solicitud.
+- **Medida:** una sola reserva creada por intención de compra.
 
-Rendimiento.
+---
 
-## Estímulo
+## EC-08 — Uso solo con teclado
 
-Muchos usuarios consultan simultáneamente la disponibilidad.
+- **Atributo:** accesibilidad.
+- **Estímulo:** el usuario navega y completa una reserva sin mouse.
+- **Respuesta esperada:** todos los controles son alcanzables, el foco es visible, los diálogos
+  atrapan y devuelven el foco, y los mensajes se anuncian.
+- **Medida:** flujo completo sin trampas de foco ni controles inaccesibles.
 
-## Respuesta esperada
+---
 
-Inventory debe responder de manera eficiente.
+## EC-09 — Uso en pantalla pequeña
 
-## Medición
+- **Atributo:** responsividad.
+- **Estímulo:** el usuario completa el flujo de compra a 360 px de ancho.
+- **Respuesta esperada:** el contenido se adapta, sin scroll horizontal, con controles táctiles
+  adecuados.
+- **Medida:** flujo completo usable en móvil.
 
-- Latencia.
-- Requests por segundo.
-- Errores.
+---
+
+## EC-10 — Listados vacíos
+
+- **Atributo:** usabilidad.
+- **Estímulo:** no hay eventos, reservas o resultados de búsqueda.
+- **Respuesta esperada:** empty state con explicación y acción sugerida (limpiar filtros, crear el
+  primer evento, volver al catálogo).
+- **Medida:** el usuario entiende que no hay datos y sabe qué hacer.
+
+---
+
+## EC-11 — Recurso inexistente
+
+- **Atributo:** robustez / usabilidad.
+- **Estímulo:** el usuario abre un evento o reserva que no existe (`404`).
+- **Respuesta esperada:** pantalla "no encontrado" con enlace al inicio o al listado.
+- **Medida:** sin pantallas en blanco ni errores técnicos expuestos.
+
+---
+
+## EC-12 — Error de red intermitente
+
+- **Atributo:** robustez.
+- **Estímulo:** la conexión falla durante una consulta o un guardado.
+- **Respuesta esperada:** mensaje de error, reintento disponible y datos ingresados conservados.
+- **Medida:** al restablecerse la conexión, el usuario puede continuar sin rehacer el trabajo.
+
+---
+
+## EC-13 — Cambio de capacidad con reservas existentes
+
+- **Atributo:** consistencia / usabilidad.
+- **Estímulo:** el organizador reduce la capacidad de una localidad que ya tiene reservas.
+- **Respuesta esperada:** la UI advierte el impacto antes de guardar y refleja el resultado que
+  devuelva el backend; no calcula disponibilidad por su cuenta.
+- **Medida:** el organizador entiende la consecuencia y no se muestra un estado inconsistente.
+
+---
+
+## EC-14 — Actualización de disponibilidad tras reservar o cancelar
+
+- **Atributo:** consistencia.
+- **Estímulo:** una reserva se crea o se cancela correctamente.
+- **Respuesta esperada:** la disponibilidad visible se actualiza en la misma sesión.
+- **Medida:** el usuario ve el nuevo estado sin recargar manualmente.

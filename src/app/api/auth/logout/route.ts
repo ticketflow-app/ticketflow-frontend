@@ -1,0 +1,8 @@
+import { NextResponse } from "next/server";
+
+import { clearAuthToken } from "@/lib/auth/session";
+
+export async function POST() {
+  await clearAuthToken();
+  return new NextResponse(null, { status: 204 });
+}
