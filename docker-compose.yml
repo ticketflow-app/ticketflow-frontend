@@ -1,0 +1,26 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ticketflow-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      # BFF -> API Gateway (dentro de la red docker)
+      API_GATEWAY_URL: http://api-gateway:8080
+      # Cookie httpOnly
+      AUTH_COOKIE_NAME: tf_token
+      # Desactivar MSW para usar backend real
+      NEXT_PUBLIC_API_MOCKING: disabled
+      # Vacío para usar BFF mismo origen
+      NEXT_PUBLIC_API_BASE_URL: ""
+      NODE_ENV: production
+    networks:
+      - ticketflow-net
+
+networks:
+  ticketflow-net:
+    external: true
+    name: ticketflow-api-gateway_default

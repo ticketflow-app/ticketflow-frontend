@@ -8,17 +8,17 @@ import type {
 export async function fetchEvents(search?: string): Promise<EventSummary[]> {
   const query = search ? `?search=${encodeURIComponent(search)}` : "";
   const { events } = await apiFetch<{ events: EventSummary[] }>(
-    `/events${query}`,
+    `/api/catalogo/eventos${query}`,
   );
   return events;
 }
 
 export async function fetchEvent(eventId: number): Promise<EventDetail> {
-  return apiFetch<EventDetail>(`/events/${eventId}`);
+  return apiFetch<EventDetail>(`/api/catalogo/eventos/${eventId}`);
 }
 
 export async function fetchAvailability(
   eventId: number,
 ): Promise<EventAvailability> {
-  return apiFetch<EventAvailability>(`/events/${eventId}/availability`);
+  return apiFetch<EventAvailability>(`/api/inventario/eventos/${eventId}/disponibilidad`);
 }

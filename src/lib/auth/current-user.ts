@@ -15,7 +15,7 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
   }
 
   try {
-    const { status, body } = await callGateway({ path: "/me", token });
+    const { status, body } = await callGateway({ path: "/api/usuarios/me", token });
     const envelope = body as ApiResponse<AuthUser> | null;
     if (status !== 200 || !envelope?.success) {
       return null;

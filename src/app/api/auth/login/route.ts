@@ -14,7 +14,7 @@ export async function POST(request: Request) {
   }
 
   const { status, body } = await callGateway({
-    path: "/login",
+    path: "/api/auth/login",
     method: "POST",
     body: input,
   });

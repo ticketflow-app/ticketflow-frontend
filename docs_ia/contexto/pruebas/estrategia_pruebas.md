@@ -10,8 +10,7 @@ El frontend **no** prueba la concurrencia ni la consistencia del inventario: esa
 pertenecen a los servicios de backend. Aquí se prueba que la interfaz represente correctamente el
 estado que recibe y que los flujos de usuario funcionen.
 
-> El stack y las herramientas de prueba aún no están decididos. Este documento define **qué** hay
-> que probar y **cómo se organiza**; la elección de herramientas requiere una `DA-xxx` aprobada.
+> **Stack de pruebas (DA-001, APROBADA):** Vitest + React Testing Library + MSW para unitarias/componentes/integración de UI. Playwright para pruebas E2E. Las herramientas ya están instaladas y configuradas.
 
 ---
 
@@ -50,9 +49,8 @@ estado que recibe y que los flujos de usuario funcionen.
 
 ### 3.4 Pruebas end-to-end (E2E)
 
-- Flujo completo de compra contra un entorno controlado.
-- Flujo de organización: crear evento con localidades y capacidades.
-- Flujo de administración: cambio de rol.
+- **No están en este repositorio.** Las pruebas E2E se gestionarán en un repositorio independiente para poder orquestar todo el stack (gateway + servicios backend + frontend).
+- Cuando se ejecuten desde el repo externo, cubrirán: flujo completo de compra, flujo de organización y flujo de administración.
 - Deben ser pocas y estables; cubren los caminos críticos.
 
 ### 3.5 Accesibilidad
@@ -110,18 +108,14 @@ estado que recibe y que los flujos de usuario funcionen.
 
 ---
 
-## 7. Herramientas (pendiente de decisión)
+## 7. Herramientas
 
-Candidatos a evaluar cuando se elija el stack:
-
-- Framework de pruebas unitarias y de componentes.
-- Librería de testing de componentes de UI.
-- Herramienta de mocking de red.
-- Framework E2E.
-- Herramienta de accesibilidad automatizada.
-
-La selección requiere una `DA-xxx` con análisis de necesidad, compatibilidad, impacto y
-alternativas. **No se instala ninguna herramienta sin aprobación humana explícita.**
+| Nivel | Herramienta | Uso |
+|---|---|---|
+| Unitarias/Componentes/Integración UI | [Vitest](https://vitest.dev/) + [@testing-library/react](https://testing-library.com/docs/react-testing-library/intro/) + [@testing-library/user-event](https://testing-library.com/docs/user-event/intro/) + [jsdom](https://github.com/jsdom/jsdom) | Pruebas rápidas con DOM simulado. Configuración en `vitest.config.ts`. |
+| Mocking de red | [MSW](https://mswjs.io/) v3 | Interceptación de peticiones HTTP. Handlers en `src/mocks/` (server para Vitest, browser para dev). |
+| E2E | [Playwright](https://playwright.dev/) | **Fuera de este repositorio.** Se ejecutarán desde un proyecto de pruebas E2E independiente. |
+| Accesibilidad | Revisión manual + validación semántica | Automatización futura si se justifica con una `DA-xxx`. |
 
 ---
 

@@ -28,7 +28,7 @@ export const metadata: Metadata = {
  */
 export const instant = false;
 
-export default async function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();
 
   return (

@@ -13,7 +13,7 @@ export async function POST(request: Request) {
   }
 
   const { status, body } = await callGateway({
-    path: "/register",
+    path: "/api/auth/register",
     method: "POST",
     body: input,
   });

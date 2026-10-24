@@ -16,7 +16,7 @@ const base = "*/api/gateway";
  * reservation creation still go to the real gateway through the BFF.
  */
 export const handlers = [
-  http.get(`${base}/events`, ({ request }) => {
+  http.get(`${base}/api/catalogo/eventos`, ({ request }) => {
     const search = new URL(request.url).searchParams
       .get("search")
       ?.trim()
@@ -34,14 +34,14 @@ export const handlers = [
     return HttpResponse.json({ events });
   }),
 
-  http.get(`${base}/events/:eventId/availability`, ({ params }) => {
+  http.get(`${base}/api/inventario/eventos/:eventId/disponibilidad`, ({ params }) => {
     const eventId = Number(params.eventId);
     const localities = MOCK_AVAILABILITY[eventId] ?? [];
     const payload: EventAvailability = { eventId, localities };
     return HttpResponse.json(payload);
   }),
 
-  http.get(`${base}/events/:eventId`, ({ params }) => {
+  http.get(`${base}/api/catalogo/eventos/:eventId`, ({ params }) => {
     const eventId = Number(params.eventId);
     const event = MOCK_EVENTS.find((item) => item.id === eventId);
     if (!event) {
@@ -50,11 +50,11 @@ export const handlers = [
     return HttpResponse.json(event);
   }),
 
-  http.get(`${base}/reservations`, () => {
+  http.get(`${base}/api/reservas`, () => {
     return HttpResponse.json({ reservations: MOCK_RESERVATIONS });
   }),
 
-  http.post(`${base}/reservations`, async ({ request }) => {
+  http.post(`${base}/api/reservas`, async ({ request }) => {
     const input = (await request.json()) as CreateReservationInput;
     return HttpResponse.json({
       id: Date.now(),

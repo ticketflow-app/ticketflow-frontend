@@ -18,7 +18,7 @@ docs_ia/
 │   ├── contexto_negocio.md          # problema, actores, reglas de negocio y alcance
 │   ├── funcionalidades.md           # módulos, pantallas, flujos y prioridad
 │   ├── diseno.md                    # principios UI/UX, navegación, pantallas, componentes, estados
-│   ├── contrato_api.md              # endpoints reales, auth, errores y huecos del backend
+│   ├── contrato_api.md              # endpoints reales, auth, errores, huecos del backend, prefijo /api/ del proyecto y contraste con la especificación de plataforma
 │   ├── requisitos/
 │   │   ├── historias_usuarios.md    # HU-01..HU-17 con implicación en la UI
 │   │   └── casos_uso.md             # CU-01..CU-07 como flujos de usuario

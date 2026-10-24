@@ -6,7 +6,7 @@ import type {
 
 export async function fetchReservations(): Promise<Reservation[]> {
   const { reservations } = await apiFetch<{ reservations: Reservation[] }>(
-    "/reservations",
+    "/api/reservas",
   );
   return reservations;
 }
@@ -14,7 +14,7 @@ export async function fetchReservations(): Promise<Reservation[]> {
 export async function createReservation(
   input: CreateReservationInput,
 ): Promise<Reservation> {
-  return apiFetch<Reservation>("/reservations", {
+  return apiFetch<Reservation>("/api/reservas", {
     method: "POST",
     body: JSON.stringify(input),
   });

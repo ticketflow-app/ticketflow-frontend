@@ -4,7 +4,9 @@ import { EventDetailView } from "@/features/events/components/event-detail-view"
 
 export default async function EventDetailPage({
   params,
-}: PageProps<"/events/[eventId]">) {
+}: {
+  params: Promise<{ eventId: string }>;
+}) {
   const { eventId } = await params;
   const parsed = Number(eventId);
 
