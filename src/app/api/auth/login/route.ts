@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { callGateway } from "@/lib/api/gateway";
 import type { ApiResponse, LoginInput, LoginResult } from "@/lib/api/types";
-import { setAuthToken } from "@/lib/auth/session";
+import { setAuthSession } from "@/lib/auth/session";
 
 export async function POST(request: Request) {
   const input = (await request.json().catch(() => null)) as LoginInput | null;
@@ -20,15 +20,18 @@ export async function POST(request: Request) {
   });
 
   const envelope = body as ApiResponse<LoginResult> | null;
-  if (status !== 200 || !envelope?.success || !envelope.data?.token) {
+  const accessToken = envelope?.data?.accessToken ?? envelope?.data?.token;
+  if (status !== 200 || !envelope?.success || !accessToken) {
     return NextResponse.json(
       { message: envelope?.message ?? "Invalid credentials" },
       { status: status === 200 ? 401 : status },
     );
   }
 
-  await setAuthToken(envelope.data.token);
+  await setAuthSession(accessToken, envelope.data.refreshToken);
 
-  const { id, name, email, role } = envelope.data;
-  return NextResponse.json({ user: { id, name, email, role } });
+  const { id, name, email, phone, role, status: userStatus, createdAt } = envelope.data;
+  return NextResponse.json({
+    user: { id, name, email, phone, role, status: userStatus, createdAt },
+  });
 }

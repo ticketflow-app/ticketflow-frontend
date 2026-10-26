@@ -1,3 +1,4 @@
+import type { ApiResponse } from "./types";
 import { ApiError, type ApiErrorPayload } from "./errors";
 
 const BFF_PREFIX = "/api/gateway";
@@ -38,6 +39,14 @@ export async function apiFetch<T>(
   }
 
   return payload as T;
+}
+
+/** Extracts `data` from the user-service `ApiResponse` envelope. */
+export function unwrapApiResponse<T>(payload: ApiResponse<T> | null | undefined): T {
+  if (!payload?.success) {
+    throw new ApiError(200, payload?.message ?? "Request failed");
+  }
+  return payload.data;
 }
 
 async function parseJson(response: Response): Promise<unknown> {

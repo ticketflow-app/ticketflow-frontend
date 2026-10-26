@@ -31,6 +31,11 @@ export function SiteHeader() {
               Mis reservas
             </Button>
           ) : null}
+          {user?.role === "admin" ? (
+            <Button variant="ghost" size="sm" render={<Link href="/admin" />}>
+              Administración
+            </Button>
+          ) : null}
         </nav>
 
         <div className="flex items-center gap-3">

@@ -1,11 +1,15 @@
-import { ApiError } from "@/lib/api/errors";
 import type {
+  ApiResponse,
   AuthUser,
+  ChangePasswordInput,
   LoginInput,
+  OrganizerRequest,
+  OrganizerRequestInput,
   RegisterInput,
+  UpdateProfileInput,
 } from "@/lib/api/types";
-
-import { API_BASE_URL } from "@/lib/api/client";
+import { API_BASE_URL, apiFetch, unwrapApiResponse } from "@/lib/api/client";
+import { ApiError } from "@/lib/api/errors";
 
 async function postJson<T>(path: string, body: unknown): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
@@ -42,4 +46,34 @@ export async function logout(): Promise<void> {
     method: "POST",
     credentials: "same-origin",
   });
+}
+
+export async function updateProfile(
+  input: UpdateProfileInput,
+): Promise<AuthUser> {
+  const payload = await apiFetch<ApiResponse<AuthUser>>("/api/usuarios/me", {
+    method: "PUT",
+    body: JSON.stringify(input),
+  });
+  return unwrapApiResponse(payload);
+}
+
+export async function changePassword(input: ChangePasswordInput): Promise<void> {
+  await apiFetch<ApiResponse<null>>("/api/usuarios/me/password", {
+    method: "PUT",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function requestOrganizer(
+  input: OrganizerRequestInput,
+): Promise<OrganizerRequest> {
+  const payload = await apiFetch<ApiResponse<OrganizerRequest>>(
+    "/api/usuarios/organizador/solicitud",
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+  );
+  return unwrapApiResponse(payload);
 }

@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 
 import { callGateway } from "@/lib/api/gateway";
+import { refreshAuthSession } from "@/lib/auth/refresh";
 import { getAuthToken } from "@/lib/auth/session";
 
 /**
  * Generic BFF proxy: forwards same-origin requests to the API Gateway and
- * attaches the bearer token stored in the httpOnly cookie.
+ * attaches the bearer token stored in the httpOnly cookie. When the access
+ * token is rejected, it tries to rotate the refresh token once and retries.
  */
 interface RouteContext {
   params: Promise<{ path: string[] }>;
@@ -14,23 +16,36 @@ interface RouteContext {
 async function forward(request: Request, context: RouteContext) {
   const { path } = await context.params;
   const { search } = new URL(request.url);
-  const token = await getAuthToken();
   const hasBody = request.method !== "GET" && request.method !== "HEAD";
+  const body = hasBody ? await request.json().catch(() => undefined) : undefined;
 
-  try {
-    const { status, body } = await callGateway({
+  async function send(token: string | null) {
+    return callGateway({
       path: `/${path.join("/")}`,
       method: request.method,
       token,
-      body: hasBody ? await request.json().catch(() => undefined) : undefined,
+      body,
       search,
     });
+  }
 
-    if (status === 204 || status === 205) {
-      return new NextResponse(null, { status });
+  try {
+    let token = await getAuthToken();
+    let result = await send(token);
+
+    if (result.status === 401) {
+      const refreshed = await refreshAuthSession();
+      if (refreshed) {
+        token = refreshed.accessToken;
+        result = await send(token);
+      }
     }
 
-    return NextResponse.json(body ?? null, { status });
+    if (result.status === 204 || result.status === 205) {
+      return new NextResponse(null, { status: result.status });
+    }
+
+    return NextResponse.json(result.body ?? null, { status: result.status });
   } catch {
     return NextResponse.json(
       { message: "The API Gateway is not reachable" },

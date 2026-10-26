@@ -17,56 +17,22 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useCreateReservation } from "@/features/reservations/hooks";
 import { isUnauthorized } from "@/lib/api/errors";
 import { formatCurrency, formatDateTime } from "@/lib/format";
-import { useCreateReservation } from "@/features/reservations/hooks";
 import { useAuthStore } from "@/stores/auth-store";
 
 import { useAvailability, useEvent } from "../hooks";
 
-export function EventDetailView({ eventId }: { eventId: number }) {
+export function EventDetailView({ eventId }: { eventId: string }) {
   const user = useAuthStore((state) => state.user);
   const event = useEvent(eventId);
   const availability = useAvailability(eventId);
   const reservation = useCreateReservation(eventId);
 
-  const [locality, setLocality] = useState("");
+  const [localityId, setLocalityId] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [feedback, setFeedback] = useState<string | null>(null);
-
-  const localities = availability.data?.localities ?? [];
-  const selected = localities.find((item) => item.locality === locality);
-  const maxQuantity = selected?.availableTickets ?? 0;
-
-  function handleSubmit(formEvent: React.FormEvent<HTMLFormElement>) {
-    formEvent.preventDefault();
-    setFeedback(null);
-
-    if (!locality) {
-      setFeedback("Selecciona una localidad.");
-      return;
-    }
-    if (quantity < 1 || quantity > maxQuantity) {
-      setFeedback("La cantidad supera la disponibilidad.");
-      return;
-    }
-
-    reservation.mutate(
-      { eventId, locality, quantity },
-      {
-        onSuccess: () => setFeedback("Reserva confirmada."),
-        onError: (error) => {
-          if (isUnauthorized(error)) {
-            setFeedback("Tu sesión expiró. Inicia sesión de nuevo.");
-            return;
-          }
-          setFeedback(
-            "No se pudo completar la reserva. Puede que ya no haya disponibilidad.",
-          );
-        },
-      },
-    );
-  }
 
   if (event.isPending) {
     return (
@@ -94,6 +60,53 @@ export function EventDetailView({ eventId }: { eventId: number }) {
   }
 
   const data = event.data;
+  const availabilityByLocality = new Map(
+    (availability.data?.localities ?? []).map((item) => [
+      item.localityId,
+      item.availableTickets,
+    ]),
+  );
+  const selected = data.localities.find((item) => item.id === localityId);
+  const maxQuantity = selected
+    ? (availabilityByLocality.get(selected.id) ?? 0)
+    : 0;
+  const totalCapacity = data.localities.reduce(
+    (total, locality) => total + locality.capacity,
+    0,
+  );
+
+  function handleSubmit(formEvent: React.FormEvent<HTMLFormElement>) {
+    formEvent.preventDefault();
+    setFeedback(null);
+
+    if (!selected) {
+      setFeedback("Selecciona una localidad.");
+      return;
+    }
+    if (quantity < 1 || quantity > maxQuantity) {
+      setFeedback("La cantidad supera la disponibilidad.");
+      return;
+    }
+
+    reservation.mutate(
+      { eventId: data.id, localityId: selected.id, quantity },
+      {
+        onSuccess: () => {
+          setFeedback("Reserva creada. Revisa el estado en Mis reservas.");
+          setQuantity(1);
+        },
+        onError: (error) => {
+          if (isUnauthorized(error)) {
+            setFeedback("Tu sesión expiró. Inicia sesión de nuevo.");
+            return;
+          }
+          setFeedback(
+            "No se pudo completar la reserva. Puede que ya no haya disponibilidad.",
+          );
+        },
+      },
+    );
+  }
 
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-8">
@@ -101,45 +114,88 @@ export function EventDetailView({ eventId }: { eventId: number }) {
         ← Volver al catálogo
       </Button>
 
+      {data.imageUrl ? (
+        <div
+          role="img"
+          aria-label={data.title}
+          className="mt-4 h-56 w-full rounded-xl bg-cover bg-center"
+          style={{ backgroundImage: `url("${data.imageUrl}")` }}
+        />
+      ) : null}
+
       <div className="mt-4 grid gap-6 md:grid-cols-[2fr_1fr]">
         <div className="flex flex-col gap-4">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">{data.name}</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">
+              {data.title}
+            </h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              {data.venue} · {formatDateTime(data.startsAt)}
+              {data.venue.name} · {data.venue.city} ·{" "}
+              {formatDateTime(data.date)}
             </p>
           </div>
           <div className="flex flex-wrap gap-1">
-            <Badge variant="secondary">{data.category}</Badge>
-            <Badge variant="outline">Desde {formatCurrency(data.minPrice)}</Badge>
+            <Badge variant="secondary">{data.category.name}</Badge>
+            <Badge variant="outline">
+              {data.minPrice == null
+                ? "Precio por confirmar"
+                : `Desde ${formatCurrency(data.minPrice)}`}
+            </Badge>
+            <Badge variant="outline">Aforo {totalCapacity}</Badge>
           </div>
-          <p className="text-sm">{data.description}</p>
+          <p className="text-sm">
+            {data.description ?? "El organizador aún no agregó una descripción."}
+          </p>
 
           <Separator />
 
           <div>
-            <h2 className="text-sm font-medium">Disponibilidad</h2>
+            <h2 className="text-sm font-medium">Localidades y disponibilidad</h2>
             {availability.isPending ? (
-              <Skeleton className="mt-2 h-16 w-full" />
+              <Skeleton className="mt-2 h-24 w-full" />
+            ) : availability.isError ? (
+              <Alert variant="destructive" className="mt-2">
+                <AlertTitle>Inventario no disponible</AlertTitle>
+                <AlertDescription>
+                  No se pudo consultar la disponibilidad en tiempo real.
+                </AlertDescription>
+              </Alert>
+            ) : data.localities.length === 0 ? (
+              <p className="mt-2 text-sm text-muted-foreground">
+                Este evento todavía no tiene localidades publicadas.
+              </p>
             ) : (
-              <ul className="mt-2 flex flex-col gap-2">
-                {localities.map((item) => (
-                  <li
-                    key={item.locality}
-                    className="flex items-center justify-between text-sm"
-                  >
-                    <span>{item.locality}</span>
-                    <Badge
-                      variant={
-                        item.availableTickets > 0 ? "secondary" : "destructive"
-                      }
+              <ul className="mt-2 flex flex-col gap-3">
+                {data.localities.map((locality) => {
+                  const available = availabilityByLocality.get(locality.id);
+                  return (
+                    <li
+                      key={locality.id}
+                      className="flex items-center justify-between gap-3 text-sm"
                     >
-                      {item.availableTickets > 0
-                        ? `${item.availableTickets} disponibles`
-                        : "Agotado"}
-                    </Badge>
-                  </li>
-                ))}
+                      <div>
+                        <p className="font-medium">{locality.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {formatCurrency(locality.price)} · Aforo{" "}
+                          {locality.capacity}
+                        </p>
+                      </div>
+                      <Badge
+                        variant={
+                          available != null && available > 0
+                            ? "secondary"
+                            : "destructive"
+                        }
+                      >
+                        {available == null
+                          ? "Sin datos"
+                          : available > 0
+                            ? `${available} disponibles`
+                            : "Agotado"}
+                      </Badge>
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </div>
@@ -165,20 +221,22 @@ export function EventDetailView({ eventId }: { eventId: number }) {
                   <select
                     id="locality"
                     className="mt-1 h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-                    value={locality}
+                    value={localityId}
                     onChange={(changeEvent) => {
-                      setLocality(changeEvent.target.value);
+                      setLocalityId(changeEvent.target.value);
                       setQuantity(1);
                     }}
                   >
                     <option value="">Selecciona una localidad</option>
-                    {localities.map((item) => (
+                    {data.localities.map((item) => (
                       <option
-                        key={item.locality}
-                        value={item.locality}
-                        disabled={item.availableTickets === 0}
+                        key={item.id}
+                        value={item.id}
+                        disabled={
+                          (availabilityByLocality.get(item.id) ?? 0) === 0
+                        }
                       >
-                        {item.locality}
+                        {item.name} · {formatCurrency(item.price)}
                       </option>
                     ))}
                   </select>
@@ -196,13 +254,17 @@ export function EventDetailView({ eventId }: { eventId: number }) {
                       setQuantity(Number(changeEvent.target.value))
                     }
                     className="mt-1"
-                    disabled={!locality}
+                    disabled={!localityId || maxQuantity === 0}
                   />
                 </div>
 
                 <Button
                   type="submit"
-                  disabled={reservation.isPending || !locality}
+                  disabled={
+                    reservation.isPending ||
+                    !localityId ||
+                    maxQuantity === 0
+                  }
                 >
                   {reservation.isPending ? "Reservando…" : "Confirmar reserva"}
                 </Button>

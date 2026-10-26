@@ -16,12 +16,16 @@ export function MswProvider({ children }: { children: ReactNode }) {
       return;
     }
     let active = true;
-    void import("@/mocks/browser").then(async ({ startMocking }) => {
-      await startMocking();
-      if (active) {
-        setReady(true);
-      }
-    });
+    void import("@/mocks/browser")
+      .then(({ startMocking }) => startMocking())
+      .catch((error: unknown) => {
+        console.error("Failed to start API mocking", error);
+      })
+      .finally(() => {
+        if (active) {
+          setReady(true);
+        }
+      });
     return () => {
       active = false;
     };

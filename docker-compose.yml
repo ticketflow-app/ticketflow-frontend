@@ -10,8 +10,9 @@ services:
     environment:
       # BFF -> API Gateway (dentro de la red docker)
       API_GATEWAY_URL: http://api-gateway:8080
-      # Cookie httpOnly
+      # Cookies httpOnly
       AUTH_COOKIE_NAME: tf_token
+      AUTH_REFRESH_COOKIE_NAME: tf_refresh
       # Desactivar MSW para usar backend real
       NEXT_PUBLIC_API_MOCKING: disabled
       # Vacío para usar BFF mismo origen

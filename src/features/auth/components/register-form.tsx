@@ -31,6 +31,7 @@ export function RegisterForm() {
       {
         name: String(form.get("name") ?? ""),
         email: String(form.get("email") ?? ""),
+        phone: String(form.get("phone") ?? ""),
         password: String(form.get("password") ?? ""),
         role: "comprador",
       },
@@ -78,6 +79,17 @@ export function RegisterForm() {
             />
           </div>
           <div>
+            <Label htmlFor="phone">Teléfono (opcional)</Label>
+            <Input
+              id="phone"
+              name="phone"
+              type="tel"
+              autoComplete="tel"
+              className="mt-1"
+              placeholder="+57 300 123 4567"
+            />
+          </div>
+          <div>
             <Label htmlFor="password">Contraseña</Label>
             <Input
               id="password"
@@ -85,7 +97,7 @@ export function RegisterForm() {
               type="password"
               autoComplete="new-password"
               required
-              minLength={6}
+              minLength={8}
               className="mt-1"
             />
           </div>

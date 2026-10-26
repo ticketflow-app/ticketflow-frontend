@@ -67,7 +67,8 @@ export function ReservationList() {
           <CardHeader>
             <CardTitle>Reserva #{reservation.id}</CardTitle>
             <CardDescription>
-              Evento {reservation.eventId} · {reservation.locality}
+              Evento {reservation.eventId} · Localidad{" "}
+              {reservation.localityId.slice(0, 8)}…
             </CardDescription>
           </CardHeader>
           <CardContent className="flex items-center justify-between">

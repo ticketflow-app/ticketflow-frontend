@@ -4,6 +4,9 @@ export const metadata = {
   title: "Mis reservas · TicketFlow",
 };
 
+/** Reservation history is fetched in the browser. */
+export const instant = false;
+
 export default function ReservationsPage() {
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-8">

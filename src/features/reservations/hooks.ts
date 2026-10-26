@@ -18,7 +18,7 @@ export function useReservations() {
   });
 }
 
-export function useCreateReservation(eventId: number) {
+export function useCreateReservation(eventId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
