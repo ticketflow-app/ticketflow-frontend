@@ -60,12 +60,12 @@ export interface EventSummary {
   id: string;
   title: string;
   status: string;
-  date: string;
   city: string;
   venueId: string;
   venueName: string | null;
   categorySlug: string | null;
   categoryName: string | null;
+  date: string;
   minPrice: number | null;
   currency: string;
   imageUrl: string | null;
@@ -132,6 +132,68 @@ export interface EventSearchParams {
   orden?: string;
   page?: number;
   size?: number;
+}
+
+export interface UserListParams {
+  q?: string;
+  page?: number;
+  size?: number;
+}
+
+export interface OrganizerEventSearchParams {
+  estado?: string;
+  page?: number;
+  size?: number;
+}
+
+export interface CreateLocalityInput {
+  name: string;
+  price: number;
+  capacity: number;
+}
+
+export interface CreateEventInput {
+  title: string;
+  description?: string;
+  categoryId: string;
+  venueId: string;
+  date: string;
+  imageUrl?: string;
+}
+
+export interface UpdateEventInput {
+  title?: string;
+  description?: string;
+  categoryId?: string;
+  venueId?: string;
+  date?: string;
+  imageUrl?: string;
+}
+
+export interface VenueInput {
+  name: string;
+  city: string;
+  address?: string;
+  capacity: number;
+}
+
+export interface UpdateVenueInput {
+  name?: string;
+  city?: string;
+  address?: string | null;
+  capacity?: number;
+}
+
+export interface CancelEventInput {
+  reason?: string;
+}
+
+export interface UploadUrlResponse {
+  uploadUrl: string;
+  method: string;
+  contentType: string;
+  imageUrl: string;
+  expiresAt: string;
 }
 
 /** Inventory returns only the locality id and its live stock; names come from the catalog. */

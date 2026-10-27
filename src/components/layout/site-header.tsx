@@ -36,6 +36,11 @@ export function SiteHeader() {
               Administración
             </Button>
           ) : null}
+          {user?.role === "organizador" || user?.role === "admin" ? (
+            <Button variant="ghost" size="sm" render={<Link href="/organizador" />}>
+              Panel de organizador
+            </Button>
+          ) : null}
         </nav>
 
         <div className="flex items-center gap-3">

@@ -1,8 +1,8 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import type { EventSearchParams } from "@/lib/api/types";
+import type { EventSearchParams, CreateEventInput, UpdateEventInput, VenueInput, UpdateVenueInput } from "@/lib/api/types";
 
 import {
   fetchAvailability,
@@ -11,6 +11,14 @@ import {
   fetchEvents,
   fetchSuggestions,
   fetchVenues,
+  createEvent,
+  updateEvent,
+  publishEvent,
+  cancelEvent,
+  createVenue,
+  updateVenue,
+  fetchUploadUrl,
+  fetchOrganizerEvents,
 } from "./api";
 
 export const eventKeys = {
@@ -24,6 +32,8 @@ export const eventKeys = {
     [...eventKeys.all, "suggestions", q] as const,
   venues: (city?: string) => [...eventKeys.all, "venues", city ?? ""] as const,
   categories: () => [...eventKeys.all, "categories"] as const,
+  organizerList: (params: { estado?: string; page?: number; size?: number }) =>
+    [...eventKeys.all, "organizer", params] as const,
 };
 
 export function useEvents(params: EventSearchParams = {}) {
@@ -70,5 +80,80 @@ export function useCategories() {
     queryKey: eventKeys.categories(),
     queryFn: () => fetchCategories(),
     staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useOrganizerEvents(params: { estado?: string; page?: number; size?: number } = {}) {
+  return useQuery({
+    queryKey: eventKeys.organizerList(params),
+    queryFn: () => fetchOrganizerEvents(params),
+  });
+}
+
+export function useCreateEvent() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: CreateEventInput) => createEvent(input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: eventKeys.all });
+    },
+  });
+}
+
+export function useUpdateEvent() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ eventId, input }: { eventId: string; input: UpdateEventInput }) => updateEvent(eventId, input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: eventKeys.all });
+    },
+  });
+}
+
+export function usePublishEvent() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (eventId: string) => publishEvent(eventId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: eventKeys.all });
+    },
+  });
+}
+
+export function useCancelEvent() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (eventId: string) => cancelEvent(eventId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: eventKeys.all });
+    },
+  });
+}
+
+export function useCreateVenue() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (venue: VenueInput) => createVenue(venue),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: eventKeys.venues("") });
+      queryClient.invalidateQueries({ queryKey: eventKeys.all });
+    },
+  });
+}
+
+export function useUpdateVenue() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ venueId, input }: { venueId: string; input: UpdateVenueInput }) => updateVenue(venueId, input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: eventKeys.venues("") });
+      queryClient.invalidateQueries({ queryKey: eventKeys.all });
+    },
+  });
+}
+
+export function useUploadUrl() {
+  return useMutation({
+    mutationFn: (contentType: string) => fetchUploadUrl(contentType),
   });
 }
