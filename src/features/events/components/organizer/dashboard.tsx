@@ -268,12 +268,17 @@ export function Dashboard() {
                       <Label htmlFor={`locality-capacity-${index}`}>Capacidad</Label>
                       <Input
                         id={`locality-capacity-${index}`}
-                        type="number"
-                        value={locality.capacity}
+                        type="text"
+                        inputMode="numeric"
+                        value={locality.capacity ? new Intl.NumberFormat('es-CO').format(locality.capacity) : ''}
                         onChange={(e) => {
-                          const raw = e.target.value.replace(/^0+/, '') || '0';
+                          // Strip all non-digit characters
+                          const raw = e.target.value.replace(/[^0-9]/g, '');
+                          // Remove leading zeros but keep at least one digit if empty
+                          const stripped = raw.replace(/^0+/, '') || '0';
+                          const num = parseInt(stripped) || 0;
                           const newLocalities = [...formData.localities];
-                          newLocalities[index].capacity = parseInt(raw) || 0;
+                          newLocalities[index].capacity = num;
                           setFormData(prev => ({ ...prev, localities: newLocalities }));
                         }}
                       />
