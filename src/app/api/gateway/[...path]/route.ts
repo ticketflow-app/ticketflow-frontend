@@ -13,15 +13,29 @@ interface RouteContext {
   params: Promise<{ path: string[] }>;
 }
 
+/**
+ * Public gateway reads that must be forwarded anonymously. The inventory service
+ * validates any bearer token it receives, so forwarding an expired or rotated
+ * cookie would turn a public read into a 401 even though the route is public.
+ */
+function isPublicRead(method: string, path: string): boolean {
+  return (
+    method === "GET" &&
+    /^\/api\/inventario\/eventos\/[^/]+\/disponibilidad$/.test(path)
+  );
+}
+
 async function forward(request: Request, context: RouteContext) {
   const { path } = await context.params;
   const { search } = new URL(request.url);
+  const gatewayPath = `/${path.join("/")}`;
+  const publicRead = isPublicRead(request.method, gatewayPath);
   const hasBody = request.method !== "GET" && request.method !== "HEAD";
   const body = hasBody ? await request.json().catch(() => undefined) : undefined;
 
   async function send(token: string | null) {
     return callGateway({
-      path: `/${path.join("/")}`,
+      path: gatewayPath,
       method: request.method,
       token,
       body,
@@ -30,10 +44,10 @@ async function forward(request: Request, context: RouteContext) {
   }
 
   try {
-    let token = await getAuthToken();
+    let token = publicRead ? null : await getAuthToken();
     let result = await send(token);
 
-    if (result.status === 401) {
+    if (result.status === 401 && !publicRead) {
       const refreshed = await refreshAuthSession();
       if (refreshed) {
         token = refreshed.accessToken;

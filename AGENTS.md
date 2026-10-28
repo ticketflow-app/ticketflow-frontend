@@ -28,7 +28,7 @@ especificación de plataforma): `docs_ia/contexto/contrato_api.md`.
 | POST | `/api/auth/login` | user-service | pública |
 | GET | `/api/usuarios/me` | user-service | Bearer |
 | PATCH | `/api/usuarios/{id}/rol` | user-service | Bearer + `admin` |
-| GET | `/api/inventario/eventos/{eventId}/disponibilidad` | inventory-service | Bearer (hoy **exige token**) |
+| GET | `/api/inventario/eventos/{eventId}/disponibilidad` | inventory-service | pública (JWT validado localmente) |
 | POST | `/api/reservas` | inventory-service | Bearer |
 
 Contratos por backend: `ticketflow-user-service/docs_ia/contexto/contrato_api.md` y
